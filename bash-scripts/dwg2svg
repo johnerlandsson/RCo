@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#Create output folders
+mkdir dwg
+mkdir dxf
+mkdir svg
+
+mv *.dwg dwg
+
+#Convert dwg to dxf
+for filepath in dwg/*.dwg
+do
+    filename=$(basename "$filepath")
+    TeighaFileConverter "./dwg" "./dxf" "ACAD13" "DXF" "0" "1" "$filename"
+done
+
+#Convert dxf to svg and move object to bottom left
+#Make sure that inkscape has align to page selected
+for filepath in dxf/*.dxf
+do
+    dxf_filename=$(basename "$filepath")
+    svg_filename=svg/"$(basename "$dxf_filename" .dxf)".svg
+    inkscape -z "$filepath" -l "$svg_filename"
+    inkscape -z --verb EditSelectAll --verb AlignHorizontalLeft \
+        --verb AlignVerticalBottom --verb FileSave --verb FileQuit
+done
