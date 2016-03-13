@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension>
+    <_name>Stranded copper</_name>
+    <id>rco.cabletools.circlefill</id>
+        <dependency type="executable" location="extensions">cable_tools_stranded_copper.py</dependency>
+        <dependency type="executable" location="extensions">inkex.py</dependency>
+        <dependency type="executable" location="extensions">simplepath.py</dependency>
+	<param name='diameter' gui-text="Circle diameter(mm)" type="float" precision="2" min="0.01" max="100.0">0.5</param>
+	<param name='tinned' gui-text="Tinned copper" type="boolean">false</param>
+	<effect>
+	    <object-type>path</object-type>
+	    <effects-menu>
+		    <submenu _name="Cable Tools"/>
+	    </effects-menu>
+	</effect>
+	<script>
+	    <command reldir="extensions" interpreter="python">cable_tools_stranded_copper.py</command>
+	</script>
+</inkscape-extension>
