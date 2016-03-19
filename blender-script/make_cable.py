@@ -17,7 +17,7 @@ def make_line(p1, p2):
     curveData.dimensions = '3D'
     #curveData.resolution_u = 12
     
-    objectData = bpy.data.objects.new("objLine", curveData)
+    objectData = bpy.data.objects.new("Line", curveData)
     objectData.location = (0, 0, 0)
     objectData.data.use_fill_caps = True
     bpy.context.scene.objects.link(objectData)
@@ -93,11 +93,8 @@ def make_bezier_spiral(length, pitch, radius):
         polyline.bezier_points[i].handle_left_type = 'ALIGNED'
         polyline.bezier_points[i].handle_left_type = 'ALIGNED'
         
-        print("%f, %f, %f" %(x, y, z))
-        
         theta += (2.0 * math.pi) / 4.0
 
-    #Add object to a scene
     return bpy.data.objects.new('Spiral', curveData)
 
 def strand_positions(conductor_radius, strand_radius):
@@ -133,23 +130,97 @@ def strand_positions(conductor_radius, strand_radius):
     return ret
 
 def make_solid_conductor(length, radius):
-    line = make_line((0, 0, 0), (0, 0, length))
     bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0), layers = JUNK_LAYER)
     circle = bpy.context.active_object
     circle.scale = (radius, radius, 0)
     
+    line = make_line((0, 0, 0), (0, 0, length))    
     line.data.bevel_object = circle
     line.data.use_fill_caps = True
+    bpy.context.scene.objects.active = line
+    line.select = True
+    bpy.ops.object.convert(target='MESH')
     
-     
+    bpy.context.scene.objects.unlink(circle)
     
+    return line
 
-def make_conductor(length, conductor_radius, strand_radius):
+# make_stranded_conductor
+# Creates a set of stranded conductor wires
+# Use convenience function make_conductor instead of calling this directly
+def make_stranded_conductor(length, conductor_radius, pitch, strand_radius):
+    points = strand_positions(conductor_radius, strand_radius)
+    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0), layers = JUNK_LAYER)
+    circle = bpy.context.active_object
+    circle.scale = (strand_radius, strand_radius, 0)
+        
+    for row in points:
+        r = math.sqrt(row[0][0]**2 + row[0][1]**2)
+        dtheta = (2.0 * math.pi) / len(row)
+        theta = 0.0
+        for i in range(len(row)):
+            if about_eq(r, 0.0):
+                make_solid_conductor(length, strand_radius)
+                continue
+            
+            spiral = make_bezier_spiral(length, pitch, r)
+            bpy.context.scene.objects.link(spiral)            
+            spiral.rotation_euler = (0, 0, theta)
+            spiral.data.bevel_object = circle
+            spiral.data.use_fill_caps = True
+            
+            for obj in bpy.context.scene.objects:
+                obj.select = False
+                
+            spiral.select = True
+            bpy.context.scene.objects.active = spiral
+            bpy.ops.object.convert(target='MESH')
+            
+            theta += dtheta
+            
+    bpy.context.scene.objects.unlink(circle)
+    
+    for obj in bpy.context.scene.objects:
+        if obj.type == 'MESH' and (obj.name.startswith("Line") or obj.name.startswith("Spiral")):
+            obj.select = True
+        else:
+            obj.select = False
+
+    bpy.ops.object.join()
+    bpy.context.scene.objects.active.name = "Conductor"
+
+def deselect_all():
+    for obj in bpy.context.scene.objects:
+        obj.select = False
+            
+# make_conductor
+# Creates a parametric conductor and puts it in the scene
+def make_conductor(length, conductor_radius, strand_radius, strand_pitch):
     if conductor_radius == strand_radius or strand_radius == None:
         return make_solid_conductor(length, conductor_radius)
     
-    return make_stranded_conductor(length, conductor_radius, strand_radius)        
+    return make_stranded_conductor(length, conductor_radius, strand_pitch, strand_radius)        
         
+def make_insulator(inner_radius, outer_radius, length, peel_length):
+    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0), layers = JUNK_LAYER)
+    outer_circle = bpy.context.scene.objects.active
+    outer_circle.scale = (outer_radius, outer_radius, 0)
+    
+    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0), layers = JUNK_LAYER)
+    inner_circle = outer_circle = bpy.context.scene.objects.active            
+    inner_circle.scale = (inner_radius, inner_radius, 0)
+    
+    deselect_all()
+    
+    inner_circle.select = True
+    outer_circle.select = True
+    bpy.ops.object.join()
+    
+    insulator_circles = bpy.context.scene.objects.active
+    
+    line = make_line((0, 0, 0), (0, 0, length))
+    line.data.bevel_object = insulator_circles
+    line.data.use_fill_caps = True
         
-        
-make_conductor(3.0, 0.00162 / 2.0, None)
+make_conductor(3.0, 0.00150, 0.00052, 4)
+make_insulator(0.00150, 0.003, 3, 0.01)
