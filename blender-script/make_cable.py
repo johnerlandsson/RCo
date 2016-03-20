@@ -56,11 +56,13 @@ def make_bezier_spiral(length, pitch, radius):
     #Create points
     theta = 0.0
     for i in range(n_points + 1):
+        #Calculate positions
         z = length * (i / n_points)
         x = radius * math.cos(theta)
         y = radius * math.sin(theta)
         polyline.bezier_points[i].co = (x, y, z)
         
+        #Calculate handle positions for each quadrant
         if about_eq(x, 0.0) and about_eq(y, radius):
             lhy = y
             rhy = y
@@ -97,6 +99,11 @@ def make_bezier_spiral(length, pitch, radius):
 
     return bpy.data.objects.new('Spiral', curveData)
 
+# strand_positions
+# Circle packing algorithm
+# conductor_radius: Radius of the larger circle
+# strand_radius: Radius of the smaller circle
+# Returns: A list of tuples representing the points
 def strand_positions(conductor_radius, strand_radius):
     ret = []
 
@@ -129,6 +136,10 @@ def strand_positions(conductor_radius, strand_radius):
 
     return ret
 
+# make_solid_conductor
+# Creates a single conductor core in the scene
+# length: Total length of the conductor in Z-axis
+# radius: Radius of the conductor
 def make_solid_conductor(length, radius):
     bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0), layers = JUNK_LAYER)
     circle = bpy.context.active_object
@@ -196,7 +207,13 @@ def make_conductor(length, conductor_radius, strand_radius, strand_pitch):
         return make_solid_conductor(length, conductor_radius)
     
     return make_stranded_conductor(length, conductor_radius, strand_pitch, strand_radius)        
-        
+
+# make_insulator
+# Creates a tube representing the insulator
+# inner_radius: The inner radius of plastic tube
+# outer_radius: The outer radius of plastic tube
+# length: Length of the part/cable in Z-axis
+# peel_length: How much of the conductor that is visible        
 def make_insulator(inner_radius, outer_radius, length, peel_length):
     bpy.ops.object.select_all(action='DESELECT')
         
@@ -232,8 +249,13 @@ def make_insulator(inner_radius, outer_radius, length, peel_length):
 def make_part(length = 1.0, conductor_radius = 1.0, insulator_radius = 2.0, insulator_peel_length = 0.01,
                 conductor_strand_radius = None, conductor_strand_pitch = 1.0):
     make_conductor(length, conductor_radius, conductor_strand_radius, conductor_strand_pitch)
+    conductor = bpy.context.scene.objects.active
+    
     make_insulator(conductor_radius, insulator_radius, length, insulator_peel_length)
-
+    insulator = bpy.context.scene.objects.active
+    
+    #Group insulator and conductor
+    insulator.parent = conductor
 
 
 
