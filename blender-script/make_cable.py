@@ -189,10 +189,6 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius):
     bpy.ops.object.join()
     bpy.context.scene.objects.active.name = "Conductor"
 
-def deselect_all():
-    for obj in bpy.context.scene.objects:
-        obj.select = False
-            
 # make_conductor
 # Creates a parametric conductor and puts it in the scene
 def make_conductor(length, conductor_radius, strand_radius, strand_pitch):
@@ -202,18 +198,18 @@ def make_conductor(length, conductor_radius, strand_radius, strand_pitch):
     return make_stranded_conductor(length, conductor_radius, strand_pitch, strand_radius)        
         
 def make_insulator(inner_radius, outer_radius, length, peel_length):
-    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0), layers = JUNK_LAYER)
-    outer_circle = bpy.context.scene.objects.active
-    outer_circle.scale = (outer_radius, outer_radius, 0)
-    
+    bpy.ops.object.select_all(action='DESELECT')
+        
     bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0), layers = JUNK_LAYER)
     inner_circle = outer_circle = bpy.context.scene.objects.active            
     inner_circle.scale = (inner_radius, inner_radius, 0)
-    
-    deselect_all()
-    
-    inner_circle.select = True
+
+    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0), layers = JUNK_LAYER)
+    outer_circle = bpy.context.scene.objects.active
+    outer_circle.scale = (outer_radius, outer_radius, 0)
+
     outer_circle.select = True
+    inner_circle.select = True
     bpy.ops.object.join()
     
     insulator_circles = bpy.context.scene.objects.active
@@ -221,6 +217,8 @@ def make_insulator(inner_radius, outer_radius, length, peel_length):
     line = make_line((0, 0, 0), (0, 0, length))
     line.data.bevel_object = insulator_circles
     line.data.use_fill_caps = True
+    line.data.bevel_factor_start = peel_length
+    line.name = "Insulator"
         
-make_conductor(3.0, 0.00150, 0.00052, 4)
-make_insulator(0.00150, 0.003, 3, 0.01)
+make_conductor(1.0, 0.00150, 0.00052, 4)
+make_insulator(0.00150, 0.003, 1.0, 0.01)
