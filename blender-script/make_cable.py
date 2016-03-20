@@ -219,6 +219,24 @@ def make_insulator(inner_radius, outer_radius, length, peel_length):
     line.data.use_fill_caps = True
     line.data.bevel_factor_start = peel_length
     line.name = "Insulator"
+    
+    bpy.context.scene.objects.active = line
+    bpy.ops.object.select_all(action='DESELECT')
+    line.select = True
+    bpy.ops.object.convert(target='MESH')
+    
+    bpy.context.scene.objects.unlink(insulator_circles)
         
-make_conductor(1.0, 0.00150, 0.00052, 4)
-make_insulator(0.00150, 0.003, 1.0, 0.01)
+# make_part
+# Creates a parametric part and puts it into the scene
+def make_part(length = 1.0, conductor_radius = 1.0, insulator_radius = 2.0, insulator_peel_length = 0.01,
+                conductor_strand_radius = None, conductor_strand_pitch = 1.0):
+    make_conductor(length, conductor_radius, conductor_strand_radius, conductor_strand_pitch)
+    make_insulator(conductor_radius, insulator_radius, length, insulator_peel_length)
+
+
+
+
+
+make_part(1.0, 0.0015, 0.003, 0.01, 0.0005, 4.0)
+
