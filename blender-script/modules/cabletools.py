@@ -32,7 +32,7 @@ def make_line(p1, p2):
 # about_eq
 # Helper function to compare floating point values
 def about_eq(a, b):
-    if a + 0.0001 > b and a - 0.0001 < b:
+    if a + 0.000001 > b and a - 0.000001 < b:
         return True
     return False
 
@@ -105,36 +105,40 @@ def make_bezier_spiral(length, pitch, radius):
 # strand_radius: Radius of the smaller circle
 # Returns: A list of tuples representing the points
 def strand_positions(conductor_radius, strand_radius):
+    rc = conductor_radius
+    rs = strand_radius
+    print("%f, %f" %(conductor_radius, strand_radius))
     ret = []
 
     while True:
-        no = int(math.floor((2.0 * math.pi * conductor_radius) / (2.0 * strand_radius)))
+        no = int(math.floor((2.0 * math.pi * rc) / (2.0 * rs)))
         ps = []
-        x0 = conductor_radius * math.cos( 0 * 2 * math.pi / no)
-        y0 = conductor_radius * math.sin( 0 * 2 * math.pi / no)
-        x1 = conductor_radius * math.cos( 1 * 2 * math.pi / no)
-        y1 = conductor_radius * math.sin( 1 * 2 * math.pi / no)
+        x0 = rc * math.cos( 0 * 2 * math.pi / no)
+        y0 = rc * math.sin( 0 * 2 * math.pi / no)
+        x1 = rc * math.cos( 1 * 2 * math.pi / no)
+        y1 = rc * math.sin( 1 * 2 * math.pi / no)
         dist = math.sqrt((x0 - x1)**2 + (y0 - y1)**2)
 
-        if dist < 2.0 * strand_radius:
+        if dist < 2.0 * rs:
             no -= 1
 
         for i in range(0, no):
-            x = conductor_radius * math.cos(i * 2 * math.pi / no)
-            y = conductor_radius * math.sin(i * 2 * math.pi / no)
+            x = rc * math.cos(i * 2 * math.pi / no)
+            y = rc * math.sin(i * 2 * math.pi / no)
             ps.append((x, y))
 
         ret.append(ps)
 
-        rc_next = conductor_radius - (2.0 * strand_radius)
-        if rc_next < strand_radius:
-            if conductor_radius > 2.0 * strand_radius:
+        rc_next = rc - (2.0 * rs)
+        if rc_next < rs:
+            if rc > 2.0 * rs:
                 ret.append([(0, 0)])
             break
         else:
-            conductor_radius = rc_next
+            rc = rc_next
 
     return ret
+
 
 # make_solid_conductor
 # Creates a single conductor core in the scene
@@ -160,11 +164,11 @@ def make_solid_conductor(length, radius):
 # Creates a set of stranded conductor wires
 # Use convenience function make_conductor instead of calling this directly
 def make_stranded_conductor(length, conductor_radius, pitch, strand_radius):
-    points = strand_positions(conductor_radius, strand_radius)
+    points = strand_positions(conductor_radius - strand_radius, strand_radius)
     bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0), layers = JUNK_LAYER)
     circle = bpy.context.active_object
     circle.scale = (strand_radius, strand_radius, 0)
-        
+    
     for row in points:
         r = math.sqrt(row[0][0]**2 + row[0][1]**2)
         dtheta = (2.0 * math.pi) / len(row)
@@ -174,14 +178,13 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius):
                 make_solid_conductor(length, strand_radius)
                 continue
             
-            spiral = make_bezier_spiral(length, pitch, r)
+            spiral = make_bezier_spiral(length = length, pitch = pitch, radius = r)
             bpy.context.scene.objects.link(spiral)            
             spiral.rotation_euler = (0, 0, theta)
             spiral.data.bevel_object = circle
             spiral.data.use_fill_caps = True
             
-            for obj in bpy.context.scene.objects:
-                obj.select = False
+            bpy.ops.object.select_all(action='DESELECT')
                 
             spiral.select = True
             bpy.context.scene.objects.active = spiral
@@ -204,9 +207,12 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius):
 # Creates a parametric conductor and puts it in the scene
 def make_conductor(length, conductor_radius, strand_radius, strand_pitch):
     if conductor_radius == strand_radius or strand_radius == None:
-        return make_solid_conductor(length, conductor_radius)
+        return make_solid_conductor(length = length, radius = conductor_radius)
     
-    return make_stranded_conductor(length, conductor_radius, strand_pitch, strand_radius)        
+    return make_stranded_conductor(length = length, 
+                                   conductor_radius = conductor_radius, 
+                                   pitch = strand_pitch, 
+                                   strand_radius = strand_radius)        
 
 # make_insulator
 # Creates a tube representing the insulator
@@ -248,7 +254,11 @@ def make_insulator(inner_radius, outer_radius, length, peel_length):
 # Creates a parametric part and puts it into the scene
 def make_part(length = 1.0, conductor_radius = 1.0, insulator_radius = 2.0, insulator_peel_length = 0.01,
                 conductor_strand_radius = None, conductor_strand_pitch = 1.0):
-    make_conductor(length, conductor_radius, conductor_strand_radius, conductor_strand_pitch)
+    make_conductor(length = length, 
+                   conductor_radius = conductor_radius, 
+                   strand_radius = conductor_strand_radius, 
+                   strand_pitch = conductor_strand_pitch)
+                   
     conductor = bpy.context.scene.objects.active
     
     make_insulator(conductor_radius, insulator_radius, length, insulator_peel_length)
@@ -258,7 +268,10 @@ def make_part(length = 1.0, conductor_radius = 1.0, insulator_radius = 2.0, insu
     insulator.parent = conductor
 
 
-
-
-make_part(1.0, 0.0015, 0.003, 0.01, 0.0005, 4.0)
+make_part(length = 0.3, 
+          conductor_radius = 0.00162 / 2.0, 
+          insulator_radius = 0.00305 / 2.0, 
+          insulator_peel_length = 0.01, 
+          conductor_strand_radius = 0.00052 / 2.0, 
+          conductor_strand_pitch = 4.0)
 
