@@ -27,6 +27,10 @@ bpy.types.Scene.CT_bezier_helix_pitch = bpy.props.FloatProperty(
         min = 0.1,
         max = 50.0)
 
+bpy.types.Scene.CT_bezier_helix_clockwize = bpy.props.BoolProperty(
+        name = "Clockwize",
+        description = "Direction of the helix")
+
 
 class BezierHelix(bpy.types.Operator):
     bl_idname = "ct.bezier_helix"
@@ -38,8 +42,9 @@ class BezierHelix(bpy.types.Operator):
         length = scene.CT_bezier_helix_length
         radius = scene.CT_bezier_helix_radius
         pitch = scene.CT_bezier_helix_pitch
+        clockwize = scene.CT_bezier_helix_clockwize
 
-        ct.make_bezier_helix(length, pitch, radius, context)
+        ct.make_bezier_helix(length, pitch, radius, clockwize, context)
 
         return {'FINISHED'}
 
@@ -58,6 +63,7 @@ class BezierHelixUI(bpy.types.Panel):
         layout.prop(scene, "CT_bezier_helix_length")
         layout.prop(scene, "CT_bezier_helix_radius")
         layout.prop(scene, "CT_bezier_helix_pitch")
+        layout.prop(scene, "CT_bezier_helix_clockwize")
         layout.operator("ct.bezier_helix", text = "Make")
 
 def register():
