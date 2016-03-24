@@ -51,10 +51,11 @@ class MakeInsulator(bpy.types.Operator):
         outer_radius = scene.CT_make_insulator_outer_dia / 2000.0
         inner_radius = scene.CT_make_insulator_inner_dia / 2000.0
         length = scene.CT_make_insulator_length
-        color = CT_make_insulator_color
+        color = scene.CT_make_insulator_color
         material = scene.CT_make_insulator_material
 
-        ct.make_insulator(outer_radius, inner_radius, length, 0.0, context)
+        ct.make_insulator(outer_radius, inner_radius, length, 0.0, material,
+                color, context)
 
         return {'FINISHED'}
 

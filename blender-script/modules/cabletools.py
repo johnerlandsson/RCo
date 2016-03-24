@@ -1,5 +1,6 @@
 import bpy
 import math
+import cablematerials as cm
 
 CONDUCTOR_MATERIALS = [('cu', 'CU', 'Standard copper'), 
                        ('cu-t', 'CU-Tinned', 'Tinned copper'), 
@@ -61,7 +62,8 @@ def make_tube_section(outer_radius, inner_radius, context):
 # outer_radius: The outer radius of plastic tube
 # length: Length of the part/cable in Z-axis
 # peel_length: How much of the conductor that is visible        
-def make_insulator(inner_radius, outer_radius, length, peel_length, context):
+def make_insulator(inner_radius, outer_radius, length, peel_length, material,
+        color, context):
     insulator_circles = make_tube_section(outer_radius, inner_radius, context) 
 
     line = make_line((0, 0, 0), (0, 0, length), context.scene)
@@ -76,6 +78,12 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, context):
     bpy.ops.object.convert(target='MESH')
     
     context.scene.objects.unlink(insulator_circles)
+
+    #Change to cycles render engine
+    if context.scene.render.engine != 'CYCLES':
+        bpy.context.scene.render.engine = 'CYCLES'
+    #Create material
+    line.active_material = cm.INSULATOR_MATERIALS[material](color)
 
     return line
 
