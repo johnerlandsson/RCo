@@ -16,7 +16,7 @@ def insulator_material(color, blend_value):
     glossy = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
     mix_shader = material.node_tree.nodes.new('ShaderNodeMixShader')
     layer_weight = material.node_tree.nodes.new('ShaderNodeLayerWeight')
-    layer_weight.inputs['Blend'].default_value = 0.15
+    layer_weight.inputs['Blend'].default_value = blend_value
 
     # link nodes to material output
     material.node_tree.links.new(material_output.inputs[0], mix_shader.outputs[0])
@@ -38,8 +38,16 @@ def pex_insulator_material(color):
 def pe_insulator_material(color):
     return insulator_material(color, 0.15)
 
-def conductor_material(color):
-        material = bpy.data.materials.new('conductor_material')
+def conductor_material(color, name):
+        # Check if material exists
+        name = 'conductor_' + name + '_material'
+
+        material = bpy.data.materials.get(name)
+        if material != None:
+            return material
+
+        # Create material
+        material = bpy.data.materials.new(name)
 
         # activate use nodes for material
         material.use_nodes = True
@@ -48,6 +56,7 @@ def conductor_material(color):
         diff_bsdf = material.node_tree.nodes.get('Diffuse BSDF')
         if not diff_bsdf == None:
             material.node_tree.nodes.remove(diff_bsdf)
+            print("Diffuse BSDF is none type")
 
         material_output = material.node_tree.nodes.get('Material Output')
         
@@ -84,13 +93,16 @@ def conductor_material(color):
         return material
 
 def copper_conductor_material():
-    return conductor_material((0.603114, 0.093013, 0.000000, 1.000000))
+    return conductor_material((0.603114, 0.093013, 0.000000, 1.000000),
+    'copper')
 
 def tinned_copper_conductor_material():
-    return conductor_material((0.800000, 0.800000, 0.800000, 1.000000))
+    return conductor_material((0.800000, 0.800000, 0.800000, 1.000000),
+    'tinned_copper')
 
 def aluminium_conductor_material():
-    return conductor_material((0.800000, 0.800000, 0.800000, 1.000000))
+    return conductor_material((0.800000, 0.800000, 0.800000, 1.000000),
+    'aluminium')
 
 INSULATOR_MATERIALS = {'pvc': pvc_insulator_material,
                        'pex': pex_insulator_material,
