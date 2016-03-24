@@ -1,8 +1,6 @@
 import bpy
 
 def pvc_material(color):
-    color = (color[0], color[1], color[2], 1.0)
-
     material = bpy.data.materials.new('pvc_material')
     material.use_nodes = True
     
@@ -14,7 +12,7 @@ def pvc_material(color):
 
     #add nodes
     diffuse = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-    diffuse.inputs['Color'].default_value = color
+    diffuse.inputs['Color'].default_value = (color[0], color[1], color[2], 1.0)
     glossy = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
     mix_shader = material.node_tree.nodes.new('ShaderNodeMixShader')
     layer_weight = material.node_tree.nodes.new('ShaderNodeLayerWeight')
@@ -27,15 +25,12 @@ def pvc_material(color):
     material.node_tree.links.new(mix_shader.inputs[0], layer_weight.outputs[1])
 
     #set viewport color
-    material.diffuse_color = color[0:3] #remove alpha color channel
-
+    material.diffuse_color = color
 
     return material
 
 def pex_material(color):
-    color = (color[0], color[1], color[2], 1.0)
-
-    material = bpy.data.materials.new('pvc_material')
+    material = bpy.data.materials.new('pex_material')
     material.use_nodes = True
     
     diff_bsdf = material.node_tree.nodes.get('Diffuse BSDF')
@@ -46,7 +41,7 @@ def pex_material(color):
 
     #add nodes
     diffuse = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-    diffuse.inputs['Color'].default_value = color
+    diffuse.inputs['Color'].default_value = (color[0], color[1], color[2], 1.0)
     glossy = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
     mix_shader = material.node_tree.nodes.new('ShaderNodeMixShader')
     layer_weight = material.node_tree.nodes.new('ShaderNodeLayerWeight')
@@ -59,15 +54,12 @@ def pex_material(color):
     material.node_tree.links.new(mix_shader.inputs[0], layer_weight.outputs[1])
 
     #set viewport color
-    material.diffuse_color = color[0:3] #remove alpha color channel
-
+    material.diffuse_color = color
 
     return material
 
 def pe_material(color):
-    color = (color[0], color[1], color[2], 1.0)
-
-    material = bpy.data.materials.new('pvc_material')
+    material = bpy.data.materials.new('pe_material')
     material.use_nodes = True
     
     diff_bsdf = material.node_tree.nodes.get('Diffuse BSDF')
@@ -78,7 +70,7 @@ def pe_material(color):
 
     #add nodes
     diffuse = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-    diffuse.inputs['Color'].default_value = color
+    diffuse.inputs['Color'].default_value = (color[0], color[1], color[2], 1.0)
     glossy = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
     mix_shader = material.node_tree.nodes.new('ShaderNodeMixShader')
     layer_weight = material.node_tree.nodes.new('ShaderNodeLayerWeight')
@@ -91,8 +83,7 @@ def pe_material(color):
     material.node_tree.links.new(mix_shader.inputs[0], layer_weight.outputs[1])
 
     #set viewport color
-    material.diffuse_color = color[0:3] #remove alpha color channel
-
+    material.diffuse_color = color
 
     return material
 

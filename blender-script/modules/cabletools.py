@@ -117,11 +117,12 @@ def make_bezier_helix(length, pitch, radius, clockwize, context):
     for i in range(n_points + 1):
         #Calculate positions
         z = length * (i / n_points)
-        x = radius * math.cos(theta) if clockwize else math.sin(theta)
-        y = radius * math.sin(theta) if clockwize else math.cos(theta)
+        x = radius * math.cos(theta) if clockwize else radius * math.sin(theta)
+        y = radius * math.sin(theta) if clockwize else radius * math.cos(theta)
         polyline.bezier_points[i].co = (x, y, z)
         
         #Calculate handle positions for each quadrant
+        print("x %f, y %f, r %f" %(x, y, radius))
         if about_eq(x, 0.0) and about_eq(y, radius):
             lhy = y
             rhy = y
@@ -145,8 +146,8 @@ def make_bezier_helix(length, pitch, radius, clockwize, context):
                
                
         dhz = (length / n_points) / 4.0 
-        lhz = z - dhz if clockwize else z + dhz
-        rhz = z + dhz if clockwize else z - dhz
+        lhz = z - dhz
+        rhz = z + dhz
     
         polyline.bezier_points[i].handle_left = (lhx, lhy, lhz)
         polyline.bezier_points[i].handle_right = (rhx, rhy, rhz)
