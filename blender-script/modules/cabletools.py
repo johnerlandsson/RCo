@@ -122,7 +122,6 @@ def make_bezier_helix(length, pitch, radius, clockwize, context):
         polyline.bezier_points[i].co = (x, y, z)
         
         #Calculate handle positions for each quadrant
-        print("x %f, y %f, r %f" %(x, y, radius))
         if about_eq(x, 0.0) and about_eq(y, radius):
             lhy = y
             rhy = y
@@ -301,15 +300,19 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 # strand_pitch: Number of revolutions per length unit
 # context: Context in wich to create the conductor object
 def make_conductor(length, conductor_radius, strand_radius, 
-        strand_pitch, context):
+        strand_pitch, material, context):
     # Solid conductor
     if conductor_radius == strand_radius or about_eq(strand_radius, 0.0):
-        return make_solid_conductor(length = length, radius = conductor_radius,
-                context = context)
-    
+        conductor = make_solid_conductor(length = length, radius = conductor_radius,
+                                            context = context)
     # Stranded conductor
-    return make_stranded_conductor(length = length, 
+    else:
+        conductor = make_stranded_conductor(length = length, 
                                    conductor_radius = conductor_radius, 
                                    pitch = strand_pitch, 
                                    strand_radius = strand_radius,
                                    context = context)
+
+    conductor.active_material = cm.CONDUCTOR_MATERIALS[material]()
+
+    return conductor

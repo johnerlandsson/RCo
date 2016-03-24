@@ -55,7 +55,7 @@ class MakeConductor(bpy.types.Operator):
         strand_pitch = scene.CT_make_conductor_pitch
 
         ct.make_conductor(length, conductor_radius, strand_radius,
-                strand_pitch, context)
+                strand_pitch, material, context)
 
         return {'FINISHED'}
 
