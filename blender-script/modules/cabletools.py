@@ -16,7 +16,7 @@ LAP_MATERIALS = [('cu', 'CU', 'Standard copper'),
 # p1: First point of line segment
 # p2: Second point of line segment
 # scene: Scene in wich to add the line segment
-def make_line(p1, p2, scene):
+def make_line(p1, p2, n_subdiv, scene):
     curveData = bpy.data.curves.new('Line', type = 'CURVE')
     curveData.dimensions = '3D'
     
@@ -37,7 +37,7 @@ def make_line(p1, p2, scene):
     scene.objects.active = objectData
     bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
     bpy.ops.curve.select_all(action='SELECT')
-    bpy.ops.curve.subdivide(number_cuts = 10)
+    bpy.ops.curve.subdivide(number_cuts = n_subdiv)
     bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     
     return objectData
@@ -76,14 +76,13 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         color, context):
     insulator_circles = make_tube_section(outer_radius, inner_radius, context) 
 
-    line = make_line((0, 0, 0), (0, 0, length), context.scene)
+    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 20.0), context.scene)
     line.data.bevel_object = insulator_circles
     line.data.use_fill_caps = True
     line.data.bevel_factor_start = peel_length
     line.name = "Insulator"
     
     context.scene.objects.active = line
-
 
     bpy.ops.object.select_all(action='DESELECT')
     line.select = True
@@ -223,7 +222,7 @@ def make_solid_conductor(length, radius, context):
     circle = context.active_object
     circle.scale = (radius, radius, 0)
     
-    line = make_line((0, 0, 0), (0, 0, length), context.scene)
+    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 20.0), context.scene)
     line.name = "Conductor"
     line.data.bevel_object = circle
     line.data.use_fill_caps = True

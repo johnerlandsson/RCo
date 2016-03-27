@@ -5,6 +5,7 @@ bl_info = {
 
 import bpy
 import cabletools as ct
+import math
 
 bpy.types.Scene.CT_line_segment_length = bpy.props.FloatProperty(
         name = "Length",
@@ -22,7 +23,7 @@ class LineSegment(bpy.types.Operator):
         scene = context.scene
         length = scene.CT_line_segment_length
 
-        ct.make_line((0, 0, 0), (0, 0, length), scene)
+        ct.make_line((0, 0, 0), (0, 0, length), math.floor(length * 10.0), scene)
 
         return {'FINISHED'}
 
