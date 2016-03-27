@@ -23,6 +23,8 @@ def make_line(p1, p2, scene):
     objectData = bpy.data.objects.new("Line", curveData)
     objectData.location = (0, 0, 0)
     objectData.data.use_fill_caps = True
+    objectData.data.use_fill_deform = True
+    objectData.data.fill_mode = 'FULL'
     scene.objects.link(objectData)
     
     polyline = curveData.splines.new('POLY')
@@ -73,15 +75,14 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
     line.name = "Insulator"
     
     context.scene.objects.active = line
+    line.data.render_resolution_u = 10
+    line.data.resolution_u = 10
     bpy.ops.object.select_all(action='DESELECT')
     line.select = True
-    bpy.ops.object.convert(target='MESH')
+    #bpy.ops.object.convert(target='MESH')
     
     context.scene.objects.unlink(insulator_circles)
 
-    #Change to cycles render engine
-    if context.scene.render.engine != 'CYCLES':
-        bpy.context.scene.render.engine = 'CYCLES'
     #Create material
     line.active_material = cm.INSULATOR_MATERIALS[material](color)
 
@@ -107,7 +108,8 @@ def make_bezier_helix(length, pitch, radius, clockwize, context):
     #Create a Bezier curve object
     curveData = bpy.data.curves.new('Spiral', type = 'CURVE')
     curveData.dimensions = '3D'
-    curveData.resolution_u = 0
+    curveData.resolution_u = 10
+    curveData.render_resolution_u = 20
     curveData.use_fill_caps = True  
     polyline = curveData.splines.new('BEZIER')
     polyline.bezier_points.add(n_points)
@@ -219,7 +221,7 @@ def make_solid_conductor(length, radius, context):
     line.data.use_fill_caps = True
     context.scene.objects.active = line
     line.select = True
-    bpy.ops.object.convert(target='MESH')
+    #bpy.ops.object.convert(target='MESH')
     
     context.scene.objects.unlink(circle)
     
@@ -265,6 +267,8 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
             # Add bevel object
             helix.data.bevel_object = circle
             helix.data.use_fill_caps = True
+            helix.data.use_fill_deform = True
+            helix.data.fill_mode = 'FULL'
             strands.append(helix)
             
             # Convert beveled object to mesh
@@ -272,7 +276,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                 
             helix.select = True
             context.scene.objects.active = helix
-            bpy.ops.object.convert(target='MESH')
+            #bpy.ops.object.convert(target='MESH')
 
             
             theta += dtheta
