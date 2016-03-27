@@ -25,12 +25,20 @@ def make_line(p1, p2, scene):
     objectData.data.use_fill_caps = True
     objectData.data.use_fill_deform = True
     objectData.data.fill_mode = 'FULL'
+    objectData.data.render_resolution_u = 0
+    objectData.data.resolution_u = 0
     scene.objects.link(objectData)
     
     polyline = curveData.splines.new('POLY')
     polyline.points.add(2)
     polyline.points[0].co = (p1[0], p1[1], p1[2], 1)
-    polyline.points[0].co = (p2[0], p2[1], p2[2], 1)
+    polyline.points[1].co = (p2[0], p2[1], p2[2], 1)
+
+    scene.objects.active = objectData
+    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+    bpy.ops.curve.select_all(action='SELECT')
+    bpy.ops.curve.subdivide(number_cuts = 10)
+    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     
     return objectData
 
@@ -75,11 +83,11 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
     line.name = "Insulator"
     
     context.scene.objects.active = line
-    line.data.render_resolution_u = 10
-    line.data.resolution_u = 10
+
+
     bpy.ops.object.select_all(action='DESELECT')
     line.select = True
-    #bpy.ops.object.convert(target='MESH')
+    bpy.ops.object.convert(target='MESH')
     
     context.scene.objects.unlink(insulator_circles)
 
@@ -221,7 +229,7 @@ def make_solid_conductor(length, radius, context):
     line.data.use_fill_caps = True
     context.scene.objects.active = line
     line.select = True
-    #bpy.ops.object.convert(target='MESH')
+    bpy.ops.object.convert(target='MESH')
     
     context.scene.objects.unlink(circle)
     
@@ -276,7 +284,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                 
             helix.select = True
             context.scene.objects.active = helix
-            #bpy.ops.object.convert(target='MESH')
+            bpy.ops.object.convert(target='MESH')
 
             
             theta += dtheta
