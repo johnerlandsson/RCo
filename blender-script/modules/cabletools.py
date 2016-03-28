@@ -17,6 +17,7 @@ LAP_MATERIALS = [('cu', 'CU', 'Standard copper'),
 # p2: Second point of line segment
 # scene: Scene in wich to add the line segment
 def make_line(p1, p2, n_subdiv, scene):
+    print("HERE")
     curveData = bpy.data.curves.new('Line', type = 'CURVE')
     curveData.dimensions = '3D'
     
@@ -30,15 +31,29 @@ def make_line(p1, p2, n_subdiv, scene):
     scene.objects.link(objectData)
     
     polyline = curveData.splines.new('POLY')
-    polyline.points.add(2)
-    polyline.points[0].co = (p1[0], p1[1], p1[2], 1)
-    polyline.points[1].co = (p2[0], p2[1], p2[2], 1)
+    if n_subdiv <= 2:
+        polyline.points.add(2)
+        polyline.points[0].co = (p1[0], p1[1], p1[2], 1)
+        polyline.points[1].co = (p2[0], p2[1], p2[2], 1)
+    else:
+        polyline.points.add(n_subdiv - 1)
+        x = p1[0]
+        y = p1[1]
+        z = p1[2]
+        dx = (p2[0] - p1[0]) / (n_subdiv - 1)
+        dy = (p2[1] - p1[1]) / (n_subdiv - 1)
+        dz = (p2[2] - p1[2]) / (n_subdiv - 1)
+        for i in range(n_subdiv):
+            polyline.points[i].co = (x, y, z, 1.0)
+            x += dx
+            y += dy
+            z += dz
 
     scene.objects.active = objectData
-    bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    bpy.ops.curve.select_all(action='SELECT')
-    bpy.ops.curve.subdivide(number_cuts = n_subdiv)
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+    #bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+    #bpy.ops.curve.select_all(action='SELECT')
+    #bpy.ops.curve.subdivide(number_cuts = n_subdiv)
+    #bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     
     return objectData
 
@@ -262,27 +277,29 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                     context))
                 continue
             
-            # Create the helix
-            helix = make_bezier_helix(length = length, 
-                                      pitch = pitch, 
-                                      radius = r,
-                                      clockwize = True,
-                                      context = context)
+            if about_eq(pitch, 0.0):
+                path = make_line((r, 0, 0), (r, 0, length), math.floor(length * 20.0), context.scene)
+            else:
+                path = make_bezier_helix(length = length, 
+                                          pitch = pitch, 
+                                          radius = r,
+                                          clockwize = True,
+                                          context = context)
 
-            helix.rotation_euler = (0, 0, theta)
+            path.rotation_euler = (0, 0, theta)
 
             # Add bevel object
-            helix.data.bevel_object = circle
-            helix.data.use_fill_caps = True
-            helix.data.use_fill_deform = True
-            helix.data.fill_mode = 'FULL'
-            strands.append(helix)
+            path.data.bevel_object = circle
+            path.data.use_fill_caps = True
+            path.data.use_fill_deform = True
+            path.data.fill_mode = 'FULL'
+            strands.append(path)
             
             # Convert beveled object to mesh
             bpy.ops.object.select_all(action='DESELECT')
                 
-            helix.select = True
-            context.scene.objects.active = helix
+            path.select = True
+            context.scene.objects.active = path
             bpy.ops.object.convert(target='MESH')
 
             
