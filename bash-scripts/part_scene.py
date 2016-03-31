@@ -7,7 +7,7 @@ import math
 def printUsage():
     print("Usage: blender --background --python batch_part.py --[CONDUCTOR DIA]\
             [CONDUCTOR MATERIAL] [CONDUCTOR STRAND DIA] [INSULATOR DIA]\
-            [INSULATOR PREASSURE TOOL] [INSULATOR MATERIAL] [FILENAME]")
+            [INSULATOR PREASSURE TOOL] [INSULATOR MATERIAL] [FILENAME] [COLOR]")
 
 def main():
 #Handle arguments
@@ -28,9 +28,9 @@ def main():
 
     filename = argv[6]
 
-    print("%f %s %f %f %f %s %s" %(conductor_r, conductor_material,
-        conductor_strand_r, insulator_r, insulator_inner_r, insulator_material,
-        filename))
+    color = cm.INSULATOR_COLORS[argv[7]]
+
+    conductor_pitch = float(argv[8])
 
 #Setup blender variables
     context = bpy.context
@@ -41,16 +41,18 @@ def main():
     tubeSection = ct.make_tube_section(insulator_r, insulator_inner_r, context)
     guideCurve.data.bevel_object = tubeSection
     guideCurve.location = (0, 0, insulator_r)
-    guideCurve.active_material = cm.INSULATOR_MATERIALS[insulator_material]((0.056, 0.593, 0.01))
+    guideCurve.active_material = cm.INSULATOR_MATERIALS[insulator_material](color)
     
     if conductor_r == conductor_strand_r or ct.about_eq(conductor_strand_r, 0.0):
-        conductor = ct.make_solid_conductor(0.02, conductor_r, context)
+        conductor = ct.make_solid_conductor(0.5, conductor_r, context)
     else:
-        conductor = ct.make_stranded_conductor(0.02, conductor_r, 1.0 / 0.045,
-                conductor_strand_r, context)
+        conductor = ct.make_stranded_conductor(0.5, conductor_r,
+                conductor_pitch, conductor_strand_r, context)
 
     conductor.rotation_euler = (0, math.pi / 2.0, 0)
-    conductor.location = (0.22, 0, insulator_r)
+    bpy.ops.object.modifier_add(type = 'CURVE')
+    conductor.modifiers['Curve'].object = guideCurve
+    conductor.location = (-0.02, 0, insulator_r)
     conductor.active_material = cm.CONDUCTOR_MATERIALS[conductor_material]()
 
 #Render image

@@ -17,7 +17,6 @@ LAP_MATERIALS = [('cu', 'CU', 'Standard copper'),
 # p2: Second point of line segment
 # scene: Scene in wich to add the line segment
 def make_line(p1, p2, n_subdiv, scene):
-    print("HERE")
     curveData = bpy.data.curves.new('Line', type = 'CURVE')
     curveData.dimensions = '3D'
     
@@ -27,7 +26,7 @@ def make_line(p1, p2, n_subdiv, scene):
     objectData.data.use_fill_deform = True
     objectData.data.fill_mode = 'FULL'
     objectData.data.render_resolution_u = 0
-    objectData.data.resolution_u = 0
+    objectData.data.resolution_u = 20
     scene.objects.link(objectData)
     
     polyline = curveData.splines.new('POLY')
@@ -91,7 +90,7 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         color, context):
     insulator_circles = make_tube_section(outer_radius, inner_radius, context) 
 
-    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 20.0), context.scene)
+    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
     line.data.bevel_object = insulator_circles
     line.data.use_fill_caps = True
     line.data.bevel_factor_start = peel_length
@@ -125,8 +124,16 @@ def about_eq(a, b):
 # context: context in wich to create the helix
 def make_bezier_helix(length, pitch, radius, clockwize, context):
     #Calculate limits
+    if about_eq(pitch, 0.0):
+        return make_line((0, 0, 0), (0, 0, length), 200.0 * length,
+                context.scene)
+
+    if about_eq(length, 0.0):
+        print("make_bezier_helix: length is zero")
+        return None
+
     n_points = int(length * pitch * 4.0)
-    
+
     #Create a Bezier curve object
     curveData = bpy.data.curves.new('Spiral', type = 'CURVE')
     curveData.dimensions = '3D'
@@ -237,7 +244,7 @@ def make_solid_conductor(length, radius, context):
     circle = context.active_object
     circle.scale = (radius, radius, 0)
     
-    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 20.0), context.scene)
+    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
     line.name = "Conductor"
     line.data.bevel_object = circle
     line.data.use_fill_caps = True
@@ -278,7 +285,8 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                 continue
             
             if about_eq(pitch, 0.0):
-                path = make_line((r, 0, 0), (r, 0, length), math.floor(length * 20.0), context.scene)
+                path = make_line((r, 0, 0), (r, 0, length), math.floor(length *
+                    200.0), context.scene)
             else:
                 path = make_bezier_helix(length = length, 
                                           pitch = pitch, 

@@ -119,3 +119,8 @@ INSULATOR_MATERIALS = {'pvc': pvc_insulator_material,
 CONDUCTOR_MATERIALS = {'cu': copper_conductor_material,
                        'cu-t': tinned_copper_conductor_material,
                        'al': aluminium_conductor_material}
+
+INSULATOR_COLORS = {'red': (0.549, 0.002, 0.009),
+                    'green': (0.013, 0.549, 0.025),
+                    'blue': (0.013, 0.07, 0.549),
+                    'yellow': (0.532, 0.549, 0.004)}
