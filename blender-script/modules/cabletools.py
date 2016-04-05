@@ -90,7 +90,7 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         color, context):
     insulator_circles = make_tube_section(outer_radius, inner_radius, context) 
 
-    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
+    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 20.0), context.scene)
     line.data.bevel_object = insulator_circles
     line.data.use_fill_caps = True
     line.data.bevel_factor_start = peel_length
@@ -122,17 +122,18 @@ def about_eq(a, b):
 # pitch: Number of revolutions per length unit
 # radius: Radius of helix
 # context: context in wich to create the helix
-def make_bezier_helix(length, pitch, radius, clockwize, context):
+def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context):
     #Calculate limits
     if about_eq(pitch, 0.0):
-        return make_line((0, 0, 0), (0, 0, length), 200.0 * length,
+        return make_line((0, 0, 0), (0, 0, length), 20.0 * length,
                 context.scene)
 
     if about_eq(length, 0.0):
         print("make_bezier_helix: length is zero")
         return None
 
-    n_points = int(length * pitch * 4.0)
+    points_per_rev = 4.0 * n_subdivisions
+    n_points = math.floor(length * pitch * points_per_rev)
 
     #Create a Bezier curve object
     curveData = bpy.data.curves.new('Spiral', type = 'CURVE')
@@ -146,35 +147,27 @@ def make_bezier_helix(length, pitch, radius, clockwize, context):
     #Create points
     theta = 0.0
     for i in range(n_points + 1):
-        #Calculate positions
         z = length * (i / n_points)
-        x = radius * math.cos(theta) if clockwize else radius * math.sin(theta)
-        y = radius * math.sin(theta) if clockwize else radius * math.cos(theta)
+        handle_hyp = math.sqrt(radius**2 + (radius / (points_per_rev / 2.0))**2)
+        h_theta = math.acos(radius / handle_hyp)
+
+        if clockwize:
+            x = radius * math.cos(theta)
+            y = radius * math.sin(theta)
+            lhx = handle_hyp * math.cos(theta - h_theta)
+            rhx = handle_hyp * math.cos(theta + h_theta)
+            lhy = handle_hyp * math.sin(theta - h_theta)
+            rhy = handle_hyp * math.sin(theta + h_theta)
+        else:
+            x = radius * math.sin(theta)
+            y = radius * math.cos(theta)
+            lhx = handle_hyp * math.sin(theta - h_theta)
+            rhx = handle_hyp * math.sin(theta + h_theta)
+            lhy = handle_hyp * math.cos(theta - h_theta)
+            rhy = handle_hyp * math.cos(theta + h_theta)
+
         polyline.bezier_points[i].co = (x, y, z)
         
-        #Calculate handle positions for each quadrant
-        if about_eq(x, 0.0) and about_eq(y, radius):
-            lhy = y
-            rhy = y
-            lhx = (radius / 2.0) if clockwize else -(radius / 2.0)
-            rhx = -(radius / 2.0) if clockwize else (radius / 2.0)
-        if about_eq(x, 0.0) and about_eq(y, -radius):
-            lhy = y
-            rhy = y
-            lhx = -(radius / 2.0) if clockwize else (radius / 2.0)
-            rhx = (radius / 2.0) if clockwize else -(radius / 2.0)
-        if about_eq(x, radius) and about_eq(y, 0.0):
-            lhx = x
-            rhx = x
-            lhy = -(radius / 2.0) if clockwize else (radius / 2.0)
-            rhy = (radius / 2.0) if clockwize else -(radius / 2.0)
-        if about_eq(x, -radius) and about_eq(y, 0.0):
-            lhx = x
-            rhx = x
-            lhy = (radius / 2.0) if clockwize else -(radius / 2.0)
-            rhy = -(radius / 2.0) if clockwize else (radius / 2.0)
-               
-               
         dhz = (length / n_points) / 4.0 
         lhz = z - dhz
         rhz = z + dhz
@@ -185,7 +178,7 @@ def make_bezier_helix(length, pitch, radius, clockwize, context):
         polyline.bezier_points[i].handle_left_type = 'ALIGNED'
         polyline.bezier_points[i].handle_left_type = 'ALIGNED'
         
-        theta += (2.0 * math.pi) / 4.0
+        theta += (2.0 * math.pi * pitch * length) / n_points
 
     helixObject = bpy.data.objects.new('Helix', curveData)
     context.scene.objects.link(helixObject)
@@ -244,7 +237,7 @@ def make_solid_conductor(length, radius, context):
     circle = context.active_object
     circle.scale = (radius, radius, 0)
     
-    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
+    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 20.0), context.scene)
     line.name = "Conductor"
     line.data.bevel_object = circle
     line.data.use_fill_caps = True
@@ -286,12 +279,13 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
             
             if about_eq(pitch, 0.0):
                 path = make_line((r, 0, 0), (r, 0, length), math.floor(length *
-                    200.0), context.scene)
+                    20.0), context.scene)
             else:
                 path = make_bezier_helix(length = length, 
                                           pitch = pitch, 
                                           radius = r,
                                           clockwize = True,
+                                          n_subdivisions = 1,
                                           context = context)
 
             path.rotation_euler = (0, 0, theta)

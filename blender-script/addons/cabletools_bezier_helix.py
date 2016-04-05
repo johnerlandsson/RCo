@@ -44,7 +44,7 @@ class BezierHelix(bpy.types.Operator):
         pitch = scene.CT_bezier_helix_pitch
         clockwize = scene.CT_bezier_helix_clockwize
 
-        ct.make_bezier_helix(length, pitch, radius, clockwize, context)
+        ct.make_bezier_helix(length, pitch, radius, clockwize, 2.0, context)
 
         return {'FINISHED'}
 
