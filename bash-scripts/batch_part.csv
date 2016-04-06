@@ -1,0 +1,13 @@
+name;insulator_dia;conductor_dia;conductor_strand_dia;insulator_material;conductor_material;conductor_pitch;colors;preassure_tool
+FK 1.5;3;1.62;0.52;pvc;cu;0;red green blue yellow;0
+FQ 1.5;3;1.62;0.52;pe;cu;0;red green blue yellow;0
+FK 2.5;3.6;2.05;0.66;pvc;cu;0;red green blue yellow;0
+FQ 2.5;3.6;2.05;0.66;pe;cu;0;red green blue yellow;0
+RK 4;4.1;2.55;0.3;pvc;cu;2;red green blue yellow;0
+RQ 4;4.1;2.55;0.3;pe;cu;2;red green blue yellow;0
+RK 6;4.7;3.15;0.3;pvc;cu;2;red green blue yellow;0
+RQ 6;4.7;3.15;0.3;pe;cu;2;red green blue yellow;0
+EK 2.5;3.4;1.80;0;pvc;cu;2;red green blue yellow;0
+EQ 2.5;3.4;1.80;0;pe;cu;2;red green blue yellow;0
+EK 0.75;2.1;1.0;0;pvc;cu;2;red green blue yellow;0
+EQ 0.75;2.1;1.0;0;pe;cu;2;red green blue yellow;0

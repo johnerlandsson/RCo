@@ -1,104 +1,38 @@
 #!/bin/python
 
+from __future__ import print_function
 import sys
 import os
+import csv
+
+def read_csv(filename):
+    ret = [] 
+    with open(filename, 'rb') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter = ';')
+
+        for row in reader:
+            row['conductor_dia'] = float(row['conductor_dia'])
+            row['insulator_dia'] = float(row['insulator_dia'])
+            row['conductor_strand_dia'] = float(row['conductor_strand_dia'])
+            row['conductor_pitch'] = float(row['conductor_pitch'])
+            row['preassure_tool'] = not bool(row['preassure_tool'])
+            row['colors'] = row['colors'].split()
+
+            ret.append(row)
+
+    csvfile.close()
+
+    return ret
 
 def main():
 #Handle arguments
-    argv = sys.argv
+    if len(sys.argv) < 2:
+        print("Error: no filename given", file=sys.stderr)
+        return -1
 
-    csv = []
-    csv.append({'conductor_dia': 1.62, 
-                'conductor_material': 'cu', 
-                'conductor_strand_dia': 0.52, 
-                'conductor_pitch': 0.0,
-                'preassure_tool': False, 
-                'insulator_material': 'pvc',
-                'insulator_dia': 3.0,
-                'name': 'fk1.5',
-                'colors': ['red', 'green', 'blue', 'yellow']})
+    csvdata = read_csv(sys.argv[1])
 
-    csv.append({'conductor_dia': 1.62, 
-                'conductor_material': 'cu', 
-                'conductor_strand_dia': 0.52, 
-                'conductor_pitch': 0.0,
-                'preassure_tool': False, 
-                'insulator_material': 'pe',
-                'insulator_dia': 3.0,
-                'name': 'fq1.5',
-                'colors': ['red', 'green', 'blue', 'yellow']})
-
-    csv.append({'conductor_dia': 2.05, 
-                'conductor_material': 'cu', 
-                'conductor_strand_dia': 0.66, 
-                'conductor_pitch': 0.0,
-                'preassure_tool': False, 
-                'insulator_material': 'pvc',
-                'insulator_dia': 3.6,
-                'name': 'fk2.5',
-                'colors': ['red', 'green', 'blue', 'yellow']})
-
-    csv.append({'conductor_dia': 2.05, 
-                'conductor_material': 'cu', 
-                'conductor_strand_dia': 0.66, 
-                'conductor_pitch': 0.0,
-                'preassure_tool': False, 
-                'insulator_material': 'pe',
-                'insulator_dia': 3.6,
-                'name': 'fq2.5',
-                'colors': ['red', 'green', 'blue', 'yellow']})
-
-    csv.append({'conductor_dia': 2.55, 
-                'conductor_material': 'cu', 
-                'conductor_strand_dia': 0.3, 
-                'conductor_pitch': 1.0 / 0.045,
-                'preassure_tool': False, 
-                'insulator_material': 'pvc',
-                'insulator_dia': 4.1,
-                'name': 'rk4',
-                'colors': ['red', 'green', 'blue', 'yellow']})
-
-    csv.append({'conductor_dia': 2.55, 
-                'conductor_material': 'cu', 
-                'conductor_strand_dia': 0.3, 
-                'conductor_pitch': 1.0 / 0.045,
-                'preassure_tool': False, 
-                'insulator_material': 'pe',
-                'insulator_dia': 4.1,
-                'name': 'rq4',
-                'colors': ['red', 'green', 'blue', 'yellow']})
-
-    csv.append({'conductor_dia': 3.15, 
-                'conductor_material': 'cu', 
-                'conductor_strand_dia': 0.3, 
-                'conductor_pitch': 1.0 / 0.045,
-                'preassure_tool': False, 
-                'insulator_material': 'pvc',
-                'insulator_dia': 4.7,
-                'name': 'rk6',
-                'colors': ['red', 'green', 'blue', 'yellow']})
-
-    csv.append({'conductor_dia': 3.15, 
-                'conductor_material': 'cu', 
-                'conductor_strand_dia': 0.3, 
-                'conductor_pitch': 1.0 / 0.045,
-                'preassure_tool': False, 
-                'insulator_material': 'pe',
-                'insulator_dia': 4.7,
-                'name': 'rq6',
-                'colors': ['red', 'green', 'blue', 'yellow']})
-
-    csv.append({'conductor_dia': 1.8, 
-                'conductor_material': 'cu', 
-                'conductor_strand_dia': 0.0, 
-                'conductor_pitch': 0.0,
-                'preassure_tool': False, 
-                'insulator_material': 'pvc',
-                'insulator_dia': 3.4,
-                'name': 'ek2.5',
-                'colors': ['red', 'green', 'blue', 'yellow']})
-
-    for part in csv:
+    for part in csvdata:
         conductor_dia = float(part['conductor_dia'])
         conductor_material = part['conductor_material']
         conductor_strand_dia = float(part['conductor_strand_dia'])
@@ -106,11 +40,13 @@ def main():
         preassure_tool = str(part['preassure_tool'])
         insulator_material = part['insulator_material']
         insulator_dia = float(part['insulator_dia'])
+
+        blender_cmd = "/home/john/src/blender-2.77-linux-glibc211-x86_64/blender --background"
         for color in part['colors']:
             filename = part['name'] + "-" + color + '.png'
 
-            cmd = "blender --background ../blender_scenes/part_scene.blend --python part_scene.py -- %f %s %f %f %s %s %s %s %f"\
-                %(conductor_dia, conductor_material, conductor_strand_dia, insulator_dia, preassure_tool,
+            cmd = "%s ../blender_scenes/part_scene.blend --python part_scene.py -- %f %s %f %f %s %s \"%s\" %s %f"\
+                %(blender_cmd, conductor_dia, conductor_material, conductor_strand_dia, insulator_dia, preassure_tool,
                     insulator_material, filename, color, conductor_pitch)
 
             print(cmd)
