@@ -26,11 +26,14 @@ def read_csv(filename):
 
 def main():
 #Handle arguments
-    if len(sys.argv) < 2:
-        print("Error: no filename given", file=sys.stderr)
+    if len(sys.argv) < 3:
+        print("Need exactly 2 arguments. CSV file and output dir", file=sys.stderr)
         return -1
 
     csvdata = read_csv(sys.argv[1])
+    output_dir = sys.argv[2]
+    if output_dir[-1] != '/':
+        output_dir += '/'
 
     for part in csvdata:
         conductor_dia = float(part['conductor_dia'])
@@ -47,7 +50,7 @@ def main():
 
             cmd = "%s ../blender_scenes/part_scene.blend --python part_scene.py -- %f %s %f %f %s %s \"%s\" %s %f"\
                 %(blender_cmd, conductor_dia, conductor_material, conductor_strand_dia, insulator_dia, preassure_tool,
-                    insulator_material, filename, color, conductor_pitch)
+                    insulator_material, output_dir + filename, color, conductor_pitch)
 
             print(cmd)
             os.system(cmd)
