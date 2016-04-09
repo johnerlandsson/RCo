@@ -35,15 +35,12 @@ def main():
 #Setup blender variables
     context = bpy.context
     scene = context.scene
+    rotation = (0, math.pi / 2.0, 0)
 
 #Create conductor
-    if conductor_r == conductor_strand_r or ct.about_eq(conductor_strand_r, 0.0):
-        conductor = ct.make_solid_conductor(0.53, conductor_r, context)
-    else:
-        conductor = ct.make_stranded_conductor(0.53, conductor_r,
-                conductor_pitch, conductor_strand_r, context)
-    conductor.rotation_euler = (0, math.pi / 2.0, 0)
-    conductor.active_material = cm.CONDUCTOR_MATERIALS[conductor_material]()
+    conductor = ct.make_conductor(0.53, conductor_r, conductor_strand_r,
+            conductor_pitch, conductor_material, context)
+    conductor.rotation_euler = rotation
 
 #Create insulator
     insulator = ct.make_insulator(inner_radius = insulator_inner_r,
@@ -53,7 +50,7 @@ def main():
                                   material = insulator_material,
                                   color = color,
                                   context = context)
-    insulator.rotation_euler = (0, math.pi / 2.0, 0)
+    insulator.rotation_euler = rotation
 
 
 #Render image
