@@ -1,11 +1,26 @@
 import bpy
+import os
 
-def insulator_material(color, blend_value):
+# append material node group from file
+# folder_path: folder path for blend file
+# obj_name: Name of node group in file
+def append_nodegroup(folder_path=os.path.dirname(__file__) + "/../../blender-materials/", 
+                     filename = "cabletools.blend", 
+                     obj_name = "plastic_pvc"):
+    obj_type = "NodeTree"
+    # tip object_full_directory_path as str: "./materials.blend\\NodeTree\\"
+    object_full_directory_path = folder_path + filename + "\\" + obj_type + "\\"
+    
+    bpy.ops.wm.append(
+        directory=object_full_directory_path, 
+        filename=obj_name, link=False )
+
+def insulator_material(color, blend_value, material_name, material_node_group_name):
     #Change to cycles render engine
     if bpy.context.scene.render.engine != 'CYCLES':
         bpy.context.scene.render.engine = 'CYCLES'
 
-    material = bpy.data.materials.new('pvc_material')
+    material = bpy.data.materials.new(material_name)
     material.use_nodes = True
     
     diff_bsdf = material.node_tree.nodes.get('Diffuse BSDF')
@@ -15,18 +30,14 @@ def insulator_material(color, blend_value):
     material_output = material.node_tree.nodes.get('Material Output')
 
     #add nodes
-    diffuse = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-    diffuse.inputs['Color'].default_value = (color[0], color[1], color[2], 1.0)
-    glossy = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
-    mix_shader = material.node_tree.nodes.new('ShaderNodeMixShader')
-    layer_weight = material.node_tree.nodes.new('ShaderNodeLayerWeight')
-    layer_weight.inputs['Blend'].default_value = blend_value
+    nodegroup = material.node_tree.nodes.new('ShaderNodeGroup')
+    nodegroup.node_tree = bpy.data.node_groups[material_node_group_name]
+    nodegroup.inputs['Color'].default_value = (color[0], color[1], color[2], 1.0)
+    nodegroup.inputs['Blend'].default_value = blend_value
 
     # link nodes to material output
-    material.node_tree.links.new(material_output.inputs[0], mix_shader.outputs[0])
-    material.node_tree.links.new(mix_shader.inputs[1], diffuse.outputs[0])
-    material.node_tree.links.new(mix_shader.inputs[2], glossy.outputs[0])
-    material.node_tree.links.new(mix_shader.inputs[0], layer_weight.outputs[1])
+    material.node_tree.links.new(material_output.inputs[0], nodegroup.outputs[0])
+    
 
     #set viewport color
     material.diffuse_color = color
@@ -34,13 +45,52 @@ def insulator_material(color, blend_value):
     return material
 
 def pvc_insulator_material(color):
-    return insulator_material(color, 0.15)
-
-def pex_insulator_material(color):
-    return insulator_material(color, 0.15)
+    append_nodegroup(obj_name = "plastic_pvc")
+    return insulator_material(color = color, 
+                              blend_value = 0.15,
+                              material_name = 'pvc_insulator_material',
+                              material_node_group_name = 'plastic_pvc')
 
 def pe_insulator_material(color):
-    return insulator_material(color, 0.15)
+    append_nodegroup(obj_name = "plastic_pe")
+    return insulator_material(color = color, 
+                              blend_value = 0.15,
+                              material_name = 'pe_insulator_material',
+                              material_node_group_name = 'plastic_pvc')
+
+# def insulator_material(color, blend_value):
+#     #Change to cycles render engine
+#     if bpy.context.scene.render.engine != 'CYCLES':
+#         bpy.context.scene.render.engine = 'CYCLES'
+# 
+#     material = bpy.data.materials.new('pvc_material')
+#     material.use_nodes = True
+#     
+#     diff_bsdf = material.node_tree.nodes.get('Diffuse BSDF')
+#     if not diff_bsdf == None:
+#         material.node_tree.nodes.remove(diff_bsdf)
+# 
+#     material_output = material.node_tree.nodes.get('Material Output')
+# 
+#     #add nodes
+#     diffuse = material.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
+#     diffuse.inputs['Color'].default_value = (color[0], color[1], color[2], 1.0)
+#     glossy = material.node_tree.nodes.new('ShaderNodeBsdfGlossy')
+#     mix_shader = material.node_tree.nodes.new('ShaderNodeMixShader')
+#     layer_weight = material.node_tree.nodes.new('ShaderNodeLayerWeight')
+#     layer_weight.inputs['Blend'].default_value = blend_value
+# 
+#     # link nodes to material output
+#     material.node_tree.links.new(material_output.inputs[0], mix_shader.outputs[0])
+#     material.node_tree.links.new(mix_shader.inputs[1], diffuse.outputs[0])
+#     material.node_tree.links.new(mix_shader.inputs[2], glossy.outputs[0])
+#     material.node_tree.links.new(mix_shader.inputs[0], layer_weight.outputs[1])
+# 
+#     #set viewport color
+#     material.diffuse_color = color
+# 
+#     return material
+# 
 
 def conductor_material(color, name):
     #Change to cycles render engine
@@ -113,7 +163,6 @@ def aluminium_conductor_material():
     'aluminium')
 
 INSULATOR_MATERIALS = {'pvc': pvc_insulator_material,
-                       'pex': pex_insulator_material,
                        'pe': pe_insulator_material}
 
 CONDUCTOR_MATERIALS = {'cu': copper_conductor_material,

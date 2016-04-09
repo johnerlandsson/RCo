@@ -90,7 +90,7 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         color, context):
     insulator_circles = make_tube_section(outer_radius, inner_radius, context) 
 
-    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 20.0), context.scene)
+    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
     line.data.bevel_object = insulator_circles
     line.data.use_fill_caps = True
     line.data.bevel_factor_start = peel_length
@@ -125,7 +125,7 @@ def about_eq(a, b):
 def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context):
     #Calculate limits
     if about_eq(pitch, 0.0):
-        return make_line((0, 0, 0), (0, 0, length), 20.0 * length,
+        return make_line((0, 0, 0), (0, 0, length), 200.0 * length,
                 context.scene)
 
     if about_eq(length, 0.0):
@@ -237,7 +237,7 @@ def make_solid_conductor(length, radius, context):
     circle = context.active_object
     circle.scale = (radius, radius, 0)
     
-    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 20.0), context.scene)
+    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
     line.name = "Conductor"
     line.data.bevel_object = circle
     line.data.use_fill_caps = True
@@ -279,7 +279,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
             
             if about_eq(pitch, 0.0):
                 path = make_line((r, 0, 0), (r, 0, length), math.floor(length *
-                    20.0), context.scene)
+                    200.0), context.scene)
             else:
                 path = make_bezier_helix(length = length, 
                                           pitch = pitch, 
