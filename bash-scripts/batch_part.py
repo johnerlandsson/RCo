@@ -46,9 +46,9 @@ def main():
 
         blender_cmd = "/home/john/src/blender-2.77-linux-glibc211-x86_64/blender --background"
         for color in part['colors']:
-            filename = part['name'] + "-" + color + '.png'
+            filename = part['name'] + "-" + color
 
-            cmd = "%s ../blender_scenes/part_scene.blend --python part_scene.py -- %f %s %f %f %s %s \"%s\" %s %f"\
+            cmd = "%s ../blender-scenes/jonas_part.blend --python jonas_part.py -- %f %s %f %f %s %s \"%s\" %s %f"\
                 %(blender_cmd, conductor_dia, conductor_material, conductor_strand_dia, insulator_dia, preassure_tool,
                     insulator_material, output_dir + filename, color, conductor_pitch)
 
