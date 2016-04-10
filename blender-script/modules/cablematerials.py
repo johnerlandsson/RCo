@@ -36,7 +36,7 @@ def insulator_material(color, blend_value, material_name, material_node_group_na
     nodegroup = material.node_tree.nodes.new('ShaderNodeGroup')
     nodegroup.node_tree = bpy.data.node_groups[material_node_group_name]
     nodegroup.inputs['Color'].default_value = (color[0], color[1], color[2], 1.0)
-    nodegroup.inputs['Blend'].default_value = blend_value
+    #nodegroup.inputs['Blend'].default_value = blend_value
 
     # link nodes to material output
     material.node_tree.links.new(material_output.inputs[0], nodegroup.outputs[0])
@@ -102,7 +102,7 @@ def copper_conductor_material():
     return conductor_material((0.603, 0.093, 0.0), 
                               (0.694, 591, 576), 
                               'conductor_cu',
-                              'metal_cu')
+                              'metal_copper')
 
 def tinned_copper_conductor_material():
     return conductor_material((0.603, 0.603, 0.603), 

@@ -56,11 +56,11 @@ def main():
 #Render image
     bpy.data.scenes["Scene"].camera = scene.objects["CamTop"]
     bpy.data.scenes["Scene"].render.filepath = "./" + filename + "_top.png"
-    #bpy.ops.render.render(write_still = True)
+    bpy.ops.render.render(write_still = True)
 
     bpy.data.scenes["Scene"].camera = scene.objects["CamBottom"]
     bpy.data.scenes["Scene"].render.filepath = "./" + filename + "_bottom.png"
-    #bpy.ops.render.render(write_still = True)
+    bpy.ops.render.render(write_still = True)
 
 if __name__ == '__main__':
     main()

@@ -18,7 +18,7 @@ LAP_MATERIALS = [('cu', 'CU', 'Standard copper'),
 # scene: Scene in wich to add the line segment
 def make_line(p1, p2, n_subdiv, scene):
     # Make sure we are in object mode
-    if bpy.ops.mode != 'OBJECT':
+    if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     curveData = bpy.data.curves.new('Line', type = 'CURVE')
@@ -67,7 +67,7 @@ def make_line(p1, p2, n_subdiv, scene):
 # context: Context in wich to create it
 def make_tube_section(outer_radius, inner_radius, context):
     # Make sure we are in object mode
-    if bpy.ops.mode != 'OBJECT':
+    if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     #Create outer circle
@@ -135,8 +135,9 @@ def insulator_stripe_vg(object, amount, double_sided = True):
 def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         color, context):
     # Make sure we are in object mode
-    if bpy.ops.mode != 'OBJECT':
+    if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+
     insulator_circles = make_tube_section(outer_radius, inner_radius, context) 
 
     line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
@@ -173,8 +174,9 @@ def about_eq(a, b):
 # context: context in wich to create the helix
 def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context):
     # Make sure we are in object mode
-    if bpy.ops.mode != 'OBJECT':
+    if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+
     #Calculate limits
     if about_eq(pitch, 0.0):
         return make_line((0, 0, 0), (0, 0, length), 200.0 * length,
@@ -286,7 +288,7 @@ def strand_positions(conductor_radius, strand_radius):
 # radius: Radius of the conductor
 def make_solid_conductor(length, radius, context):
     # Make sure we are in object mode
-    if bpy.ops.mode != 'OBJECT':
+    if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0))
@@ -311,7 +313,7 @@ def make_solid_conductor(length, radius, context):
 def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                             context):
     # Make sure we are in object mode
-    if bpy.ops.mode != 'OBJECT':
+    if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
     #Create a list of points corresponding to the strand positions
