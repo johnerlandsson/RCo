@@ -57,7 +57,7 @@ def pe_insulator_material(color):
     return insulator_material(color = color, 
                               blend_value = 0.15,
                               material_name = 'pe_insulator_material',
-                              material_node_group_name = 'plastic_pvc')
+                              material_node_group_name = 'plastic_pe')
 
 def conductor_material(base_color, gloss_color, material_name,
         material_node_group_name):
