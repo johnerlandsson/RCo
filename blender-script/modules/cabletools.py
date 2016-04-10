@@ -17,6 +17,10 @@ LAP_MATERIALS = [('cu', 'CU', 'Standard copper'),
 # p2: Second point of line segment
 # scene: Scene in wich to add the line segment
 def make_line(p1, p2, n_subdiv, scene):
+    # Make sure we are in object mode
+    if bpy.ops.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+
     curveData = bpy.data.curves.new('Line', type = 'CURVE')
     curveData.dimensions = '3D'
     
@@ -62,6 +66,10 @@ def make_line(p1, p2, n_subdiv, scene):
 # inner_radius: Radius of the inner circle
 # context: Context in wich to create it
 def make_tube_section(outer_radius, inner_radius, context):
+    # Make sure we are in object mode
+    if bpy.ops.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+
     #Create outer circle
     bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0))
     outer_circle = context.active_object
@@ -80,6 +88,44 @@ def make_tube_section(outer_radius, inner_radius, context):
 
     return context.active_object
 
+# insulator_stripe_vg
+# Creates a vertexgroup representing the slice(s) on an insulator to be colored
+# differently from the base color
+# object: Object to select vertices from
+# amount: Percentage of circomference
+# double_sided: Stripe on one side or both?
+def insulator_stripe_vg(object, amount, double_sided = True):
+    # Make sure we are working on a mesh object
+    if object.type != 'MESH':
+        return None
+    
+    # Make sure we are in edit mode
+    if bpy.ops.mode != 'EDIT':
+        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
+    
+    # Calculate max/min angle
+    angle = 2.0 * math.pi * amount
+    if double_sided:
+        angle /= 2.0
+        
+    # Create new vertex group
+    mesh = bmesh.from_edit_mesh(object.data)
+    group = object.vertex_groups.new("Stripe")    
+    
+    # Add vertices to group
+    group_items = []
+    for v in mesh.verts:
+        va = math.atan(v.co.x / v.co.y)
+        if not double_sided and v.co.y < 0.0:
+            continue
+        if va < angle / 2.0 and va > -angle / 2.0:
+            group_items.append(v.index)
+    # Switch back to object mode
+    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)                            
+    group.add(group_items, 1.0, 'ADD')
+    
+    return group            
+
 # make_insulator
 # Creates a tube representing the insulator
 # inner_radius: The inner radius of plastic tube
@@ -88,6 +134,9 @@ def make_tube_section(outer_radius, inner_radius, context):
 # peel_length: How much of the conductor that is visible        
 def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         color, context):
+    # Make sure we are in object mode
+    if bpy.ops.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     insulator_circles = make_tube_section(outer_radius, inner_radius, context) 
 
     line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
@@ -123,6 +172,9 @@ def about_eq(a, b):
 # radius: Radius of helix
 # context: context in wich to create the helix
 def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context):
+    # Make sure we are in object mode
+    if bpy.ops.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     #Calculate limits
     if about_eq(pitch, 0.0):
         return make_line((0, 0, 0), (0, 0, length), 200.0 * length,
@@ -233,6 +285,10 @@ def strand_positions(conductor_radius, strand_radius):
 # length: Total length of the conductor in Z-axis
 # radius: Radius of the conductor
 def make_solid_conductor(length, radius, context):
+    # Make sure we are in object mode
+    if bpy.ops.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+
     bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0))
     circle = context.active_object
     circle.scale = (radius, radius, 0)
@@ -254,6 +310,10 @@ def make_solid_conductor(length, radius, context):
 # Use convenience function make_conductor instead of calling this directly
 def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                             context):
+    # Make sure we are in object mode
+    if bpy.ops.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+
     #Create a list of points corresponding to the strand positions
     points = strand_positions(conductor_radius - strand_radius, strand_radius)
 
