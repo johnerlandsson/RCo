@@ -408,3 +408,109 @@ def make_conductor(length, conductor_radius, strand_radius,
     conductor.active_material = cm.CONDUCTOR_MATERIALS[material]()
 
     return conductor
+
+# make_braid_bundle
+# Helper function to create a bundle of spiraling strands.
+# Used by make_braid
+#
+# length: Length of spirals in Z-axis
+# radius: Radius of spirals
+# pitch: Number of revolutions per length unit
+# strand_radius: Radius of individual strands
+# bundle_size: Number of strands in each bundle
+# clockwize: True if spirals turn clockwize
+# context: Context in wich to create the bundle
+def make_braid_bundle(length, radius, pitch, strand_radius, bundle_size, clockwize, context):
+    # Calculate angle between strands
+    dtheta = 2.0 * math.pi / ((radius * math.pi) / (2.6 * strand_radius))
+ 
+    # Create circle
+    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0))
+    circle = context.active_object
+    circle.scale = (2.0 * strand_radius, 2.0 * strand_radius, 0.0)
+    
+    strands = []
+    theta = 0.0
+    for i in range(bundle_size):
+        # Create helix
+        helix = make_bezier_helix(length, pitch, radius, clockwize, 2, context)
+        helix.data.bevel_object = circle
+        helix.data.use_fill_caps = True
+        helix.rotation_euler = (0, 0, theta)
+        
+        strands.append(helix)
+        
+        theta += dtheta
+        
+   # Join strands
+    bpy.ops.object.select_all(action = 'DESELECT')
+    for strand in strands:
+        strand.select = True
+    context.scene.objects.active = strands[0]
+    bpy.ops.object.join()
+    ret = context.scene.objects.active
+        
+    ret.name = 'BraidBundle'
+    
+    # Convert to mesh
+    bpy.ops.object.select_all(action = 'DESELECT')
+    ret.select = True
+    bpy.ops.object.convert(target = 'MESH')
+    
+    # Remove circle
+    context.scene.objects.unlink(circle)
+   
+    return ret
+            
+# make_braid
+# Creates a cable braid. 
+#
+# length: Length of spirals in Z-axis
+# radius: Radius of spirals
+# pitch: Number of revolutions per length unit
+# strand_radius: Radius of individual strands
+# bundle_size: Number of strands in each bundle
+# n_bundle_pairs: Number of clockwize and anticlockwize bundles
+# material: Name of the material
+# context: Context in wich to create the bundle
+def make_braid(length, radius, pitch, strand_radius, bundle_size,
+        n_bundle_pairs, material, context):
+    # Calculate angle between bundles
+    dtheta = 2.0 * math.pi / n_bundle_pairs
+    
+    wm = bpy.context.window_manager
+    wm.progress_begin(0, n_bundle_pairs)
+    
+    # Create bundles
+    theta = 0.0
+    bundles = []
+    
+    for i in range(n_bundle_pairs):
+        braid_cw = make_braid_bundle(length, radius, pitch, strand_radius, bundle_size, True, context)
+        braid_cw.rotation_euler = (0, 0, theta)
+        
+        braid_ccw = make_braid_bundle(length, radius, pitch, strand_radius, bundle_size, False, context)
+        braid_ccw.rotation_euler = (0, 0, theta + (dtheta / 2.0))
+        
+        bundles.append(braid_cw)
+        bundles.append(braid_ccw)
+        
+        theta += dtheta
+        
+        wm.progress_update(i)
+    
+    # Join bundles
+    bpy.ops.object.select_all(action = 'DESELECT')
+    for bundle in bundles:
+        bundle.select = True
+        
+    context.scene.objects.active = bundles[0]
+    bpy.ops.object.join()
+    
+    ret = context.active_object
+    ret.name = "Braid"
+    ret.active_material = cm.CONDUCTOR_MATERIALS[material]()
+    
+    wm.progress_end()
+    
+    return ret
