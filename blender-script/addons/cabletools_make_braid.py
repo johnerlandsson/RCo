@@ -79,7 +79,7 @@ class MakeBraid(bpy.types.Operator):
 # Panel class
 class MakeBraidUI(bpy.types.Panel):
     bl_label = "Make braid"
-    bl_idname = "OBJECT_PT_ct_make_conductor_ui"
+    bl_idname = "OBJECT_PT_ct_make_braid_ui"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_category = 'Cable Tools'

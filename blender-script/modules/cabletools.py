@@ -301,7 +301,7 @@ def make_solid_conductor(length, radius, context):
     line.data.use_fill_caps = True
     context.scene.objects.active = line
     line.select = True
-    bpy.ops.object.convert(target='MESH')
+    #bpy.ops.object.convert(target='MESH')
     
     context.scene.objects.unlink(circle)
     
@@ -364,7 +364,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                 
             path.select = True
             context.scene.objects.active = path
-            bpy.ops.object.convert(target='MESH')
+            #bpy.ops.object.convert(target='MESH')
 
             
             theta += dtheta

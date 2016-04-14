@@ -25,7 +25,7 @@ bpy.types.Scene.CT_make_conductor_length = bpy.props.FloatProperty(
         name = "Length (m)",
         description = "Length of the conductor",
         default = 1.5,
-        min = 0.5,
+        min = 0.2,
         max = 10.0)
 
 bpy.types.Scene.CT_make_conductor_pitch = bpy.props.FloatProperty(

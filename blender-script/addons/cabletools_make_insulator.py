@@ -25,7 +25,7 @@ bpy.types.Scene.CT_make_insulator_length = bpy.props.FloatProperty(
         name = "Length (m)",
         description = "Length of the insulator",
         default = 1.5,
-        min = 0.5,
+        min = 0.1,
         max = 10.0)
 
 bpy.types.Scene.CT_make_insulator_color = bpy.props.FloatVectorProperty(
