@@ -303,7 +303,7 @@ def make_solid_conductor(length, radius, context):
     line.select = True
     #bpy.ops.object.convert(target='MESH')
     
-    context.scene.objects.unlink(circle)
+    #context.scene.objects.unlink(circle)
     
     return line
 
@@ -360,10 +360,10 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
             strands.append(path)
             
             # Convert beveled object to mesh
-            bpy.ops.object.select_all(action='DESELECT')
+            #bpy.ops.object.select_all(action='DESELECT')
                 
-            path.select = True
-            context.scene.objects.active = path
+            #path.select = True
+            #context.scene.objects.active = path
             #bpy.ops.object.convert(target='MESH')
 
             
@@ -380,7 +380,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 
 
     # Remove the circle that was used as a bevel object
-    context.scene.objects.unlink(circle)
+    #context.scene.objects.unlink(circle)
 
     return context.scene.objects.active
 
