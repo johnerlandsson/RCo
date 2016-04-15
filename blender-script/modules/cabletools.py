@@ -16,6 +16,38 @@ JUNK_LAYER = (False, False, False, False, False, False, False, False, False, Fal
 
 BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO = 0.55213
 
+# deep_link_objects
+# Returns a copy of the passed object. Data is linked
+# object: Object to copy
+# context: context in wich to create the copy
+def deep_link_object(obj, context, with_children = False):
+    ret = bpy.data.objects.new(obj.name, obj.data)
+    context.scene.objects.link(ret)
+
+    if with_children:
+        for child in obj.children:
+            child_clone = bpy.data.objects.new(child.name, child.data)
+            child_clone.parent = ret
+            context.scene.objects.link(child_clone)
+
+    return ret
+
+# join_objects
+# Conveniencefunction to join a list of objects
+# objects: List of objects to join
+# context: Context containing the objects
+def join_objects(objects, context):
+    if len(objects) < 2:
+        return
+    
+    bpy.ops.object.select_all(action = 'DESELECT')
+    for o in objects:
+        o.select = True
+    context.scene.objects.active = objects[0]
+    bpy.ops.object.join()
+    
+    return context.active_object
+
 # make_circle
 # Returns a bezier circle
 # radius: Circle radius
@@ -23,8 +55,8 @@ BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO = 0.55213
 def make_circle(radius, context):
     curveData = bpy.data.curves.new('Circle', type = 'CURVE')
     curveData.dimensions = '3D'
-    curveData.resolution_u = 10
-    curveData.render_resolution_u = 50
+    curveData.resolution_u = 1
+    curveData.render_resolution_u = 20
     curveData.use_fill_caps = False
      
      
@@ -70,7 +102,7 @@ def make_line(p1, p2, n_subdiv, scene):
     objectData.data.use_fill_caps = True
     objectData.data.use_fill_deform = True
     objectData.data.fill_mode = 'FULL'
-    objectData.data.render_resolution_u = 0
+    objectData.data.render_resolution_u = 1
     objectData.data.resolution_u = 20
     scene.objects.link(objectData)
     
@@ -112,13 +144,10 @@ def make_tube_section(outer_radius, inner_radius, context):
     inner_circle = make_circle(inner_radius, context)
 
     # Join circles
-    bpy.ops.object.select_all(action='DESELECT')
-    inner_circle.select = True
-    outer_circle.select = True
-    bpy.ops.object.join()
-    bpy.context.scene.objects.active.name = "TubeSection"
+    ret = join_objects([outer_circle, inner_circle], context)
+    ret.name = "TubeSection"
 
-    return context.active_object
+    return ret
 
 # insulator_stripe_vg
 # Creates a vertexgroup representing the slice(s) on an insulator to be colored
@@ -224,7 +253,7 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
     #Create a Bezier curve object
     curveData = bpy.data.curves.new('HelixCurve', type = 'CURVE')
     curveData.dimensions = '3D'
-    curveData.resolution_u = 10
+    curveData.resolution_u = 1
     curveData.render_resolution_u = 20
     curveData.use_fill_caps = True  
     polyline = curveData.splines.new('BEZIER')
@@ -401,15 +430,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
             theta += dtheta
             
     # Join strands
-    bpy.ops.object.select_all(action='DESELECT')
-    for strand in strands:
-        strand.select = True
-
-    ret = strands[0]
-    context.scene.objects.active = ret
-
-    bpy.ops.object.join()
-
+    ret = join_objects(strands, context)
     ret.name = "Conductor"
     circle.parent = ret
 
@@ -449,11 +470,13 @@ def make_conductor(length, conductor_radius, strand_radius,
 # length: Length of spirals in Z-axis
 # radius: Radius of spirals
 # pitch: Number of revolutions per length unit
+# strand_profile: Bevel object for the helixes
 # strand_radius: Radius of individual strands
 # bundle_size: Number of strands in each bundle
 # clockwize: True if spirals turn clockwize
 # context: Context in wich to create the bundle
-def make_braid_bundle(length, radius, pitch, strand_profile, strand_radius, bundle_size, clockwize, context):
+def make_braid_bundle(length, radius, pitch, strand_profile, strand_radius, 
+                        bundle_size, clockwize, context):
     # Calculate angle between strands
     dtheta = 2.0 * math.pi / ((radius * math.pi) / (1.6 * strand_radius))
  
@@ -461,27 +484,23 @@ def make_braid_bundle(length, radius, pitch, strand_profile, strand_radius, bund
     theta = 0.0
     for i in range(bundle_size):
         # Create helix
-        helix = make_bezier_helix(length, pitch, radius, clockwize, 2, context)
-        helix.data.bevel_object = strand_profile
-        helix.data.use_fill_caps = True
+        if i == 0:
+            helix = make_bezier_helix(length, pitch, radius, clockwize, 2, context)
+            helix.data.bevel_object = strand_profile
+            helix.data.use_fill_caps = True
+            strands.append(helix)
+        else:
+            helix = deep_link_object(strands[0], context)
+            strands.append(helix)
+            
         helix.rotation_euler = (0, 0, theta)
         helix.name = "BraidStrand"
         
         strands.append(helix)
         
         theta += dtheta
-        
-   # Join strands
-    bpy.ops.object.select_all(action = 'DESELECT')
-    for strand in strands:
-        strand.select = True
-    ret = strands[0]
-    context.scene.objects.active = ret
-    bpy.ops.object.join()
-        
-    ret.name = 'BraidBundle'
-    
-    return ret
+            
+    return join_objects(strands, context)
             
 # make_braid
 # Creates a cable braid. 
@@ -504,40 +523,187 @@ def make_braid(length, radius, pitch, strand_radius, bundle_size,
     
     # Create bundles
     theta = 0.0
-    bundles = []
+    cw_bundles = []
+    ccw_bundles = []
     strand_profile = make_circle(strand_radius, context)
     strand_profile.layers = JUNK_LAYER
+    strand_profile.name = "StrandProfile"
     
     for i in range(n_bundle_pairs):
-        braid_cw = make_braid_bundle(length, radius, pitch, strand_profile,
-                strand_radius, bundle_size, True, context)
-        braid_cw.rotation_euler = (0, 0, theta)
+        # Keep track of first strands
+        if i == 0:
+            bundle_cw = make_braid_bundle(length, radius, pitch, strand_profile,
+                    strand_radius, bundle_size, True, context)
+            bundle_ccw = make_braid_bundle(length, radius, pitch, strand_profile,
+                    strand_radius, bundle_size, False, context)
+            bundle_ccw.rotation_euler = (0, 0, dtheta / 2.0)
+        # Create copies of original strands
+        else:
+            bundle_cw = deep_link_object(cw_bundles[0], context, True)
+            bundle_cw.rotation_euler = (0, 0, theta)
+            cw_bundles.append(bundle_cw)
+            
+            bundle_ccw = deep_link_object(ccw_bundles[0], context, True)
+            bundle_ccw.rotation_euler = (0, 0, theta + (dtheta / 2.0))
+            ccw_bundles.append(bundle_ccw)
         
-        braid_ccw = make_braid_bundle(length, radius, pitch, strand_profile,
-                strand_radius, bundle_size, False, context)
-        braid_ccw.rotation_euler = (0, 0, theta + (dtheta / 2.0))
-        
-        bundles.append(braid_cw)
-        bundles.append(braid_ccw)
-        
+        cw_bundles.append(bundle_cw)
+        ccw_bundles.append(bundle_ccw)
+                
         theta += dtheta
-        
         wm.progress_update(i)
     
-    # Join bundles
-    bpy.ops.object.select_all(action = 'DESELECT')
-    for bundle in bundles:
-        bundle.select = True
-        
-    context.scene.objects.active = bundles[0]
-    bpy.ops.object.join()
-    
-    ret = context.active_object
-    ret.name = "Braid"
-    ret.active_material = cm.CONDUCTOR_MATERIALS[material]()
-
-    strand_profile.parent = ret
     
     wm.progress_end()
     
-    return ret
+    cw = join_objects(cw_bundles, context)
+    ccw = join_objects(ccw_bundles, context)
+    
+    braid = join_objects([cw, ccw], context)
+    braid.name = "Braid"
+    #strand_profile.parent = braid
+    strand_profile.hide = True
+    braid.active_material = cm.CONDUCTOR_MATERIALS[material]()
+    
+    return braid
+
+#################################################################################################
+# The following functions has been lifted from Curve Tools by Zak
+# Permission pending
+# https://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/Curve/Curve_Tools
+#################################################################################################
+
+#cubic bezier value
+def cubic(p, t):
+    return p[0]*(1.0-t)**3.0 + 3.0*p[1]*t*(1.0-t)**2.0 + 3.0*p[2]*(t**2.0)*(1.0-t) + p[3]*t**3.0
+
+#gets a bezier segment's control points on global coordinates
+def getbezpoints(spl, mt, seg=0):
+    points = spl.bezier_points
+    p0 = mt * points[seg].co
+    p1 = mt * points[seg].handle_right
+    p2 = mt * points[seg+1].handle_left
+    p3 = mt * points[seg+1].co
+    return p0, p1, p2, p3
+
+#calculates a global parameter t along all control points
+#t=0 begining of the curve
+#t=1 ending of the curve
+
+def calct(obj, t):
+
+    spl=None
+    mw = obj.matrix_world
+    if obj.data.splines.active==None:
+        if len(obj.data.splines)>0:
+            spl=obj.data.splines[0]
+    else:
+        spl = obj.data.splines.active
+
+    if spl==None:
+        return False
+
+    if spl.type=="BEZIER":
+        points = spl.bezier_points
+        nsegs = len(points)-1
+
+        d = 1.0/nsegs
+        seg = int(t/d)
+        t1 = t/d - int(t/d)
+
+        if t==1:
+            seg-=1
+            t1 = 1.0
+
+        p = getbezpoints(spl,mw, seg)
+
+        coord = cubic(p, t1)
+
+        return coord
+
+    elif spl.type=="NURBS":
+        data = getnurbspoints(spl, mw)
+        pts = data[0]
+        ws = data[1]
+        order = spl.order_u
+        n = len(pts)
+        ctype = spl.use_endpoint_u
+        kv = knots(n, order, ctype)
+
+        coord = C(t, order-1, pts, ws, kv)
+
+        return coord
+
+def arclength(obj):
+    length = 0.0
+
+    if obj.type=="CURVE":
+        prec = 1000 #precision
+        inc = 1/prec #increments
+
+        for i in range(0, prec):
+            ti = i*inc
+            tf = (i+1)*inc
+            a = calct(obj, ti)
+            b = calct(obj, tf)
+            r = (b-a).magnitude
+            length+=r
+
+    return length
+
+#################################################################################################
+# End Curve Tools functions
+#################################################################################################
+
+# make_conductor_array
+# Returns a circular array of conductors
+#
+# length: Length of conductors in Z-axis
+# pitch: Pitch of the entire conductor array
+# radius: Radius of conductor array
+# conductor_radius: Radius of each individual conductor
+# strand_pitch: Pitch of the individual strands in each conductor
+# material: String describing the conductor material
+# strand_radius: Radius of individual strands
+# clockwize: Direction of array rotation
+# n_conductors: Number of conductors in array
+# context: Context in wich to create the array
+def make_conductor_array(length, pitch, radius, conductor_radius, 
+                         strand_pitch, material, strand_radius, 
+                         clockwize, n_conductors, context):
+    if n_conductors < 1:
+        return None
+
+    # Create guide curve for curve modifier
+    guide_curve = make_bezier_helix(length, pitch, radius, clockwize, 1, context)
+    
+    # Create conductor
+    conductor = make_conductor(arclength(guide_curve), 
+                               conductor_radius, 
+                               strand_radius,
+                               strand_pitch,
+                               material,
+                               context)
+    # Create and apply curve modifier
+    curve_mod = conductor.modifiers.new('cond_circ_arr', 'CURVE')
+    curve_mod.object = guide_curve
+    curve_mod.deform_axis = 'POS_Z'
+    bpy.ops.object.modifier_apply(apply_as='DATA', modifier="cond_circ_arr")
+    
+    # Don't need the guide curve anymore
+    context.scene.objects.unlink(guide_curve)
+    
+    # Duplicate and rotate
+    theta = dtheta = (2.0 * math.pi) / n_conductors    
+    for i in range(0, n_conductors - 1):
+        print(theta)
+        curveData = bpy.data.curves.new('ConductorCurve', type = 'CURVE')
+        ob_new = bpy.data.objects.new('Conductor', curveData)
+        ob_new.data = conductor.data
+        ob_new.rotation_euler = (0, 0, theta)
+        ob_new.parent = conductor
+        context.scene.objects.link(ob_new)
+
+        theta += dtheta
+
+    return conductor    
