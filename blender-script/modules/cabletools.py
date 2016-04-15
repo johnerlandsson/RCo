@@ -11,6 +11,47 @@ INSULATOR_MATERIALS = [('pvc', 'PVC', 'PVC'),
 LAP_MATERIALS = [('cu', 'CU', 'Standard copper'), 
                  ('nylon', 'Nylon', 'Nylon filt lap')]
 
+JUNK_LAYER = (False, False, False, False, False, False, False, False, False, False,
+              False, False, False, False, False, False, False, False, False, True)
+
+BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO = 0.55213
+
+# make_circle
+# Returns a bezier circle
+# radius: Circle radius
+# context: Context in wich to create the circle
+def make_circle(radius, context):
+    curveData = bpy.data.curves.new('Circle', type = 'CURVE')
+    curveData.dimensions = '3D'
+    curveData.resolution_u = 10
+    curveData.render_resolution_u = 50
+    curveData.use_fill_caps = False
+     
+     
+    polyline = curveData.splines.new('BEZIER')
+    polyline.use_cyclic_u = True
+    polyline.bezier_points.add(3)
+    
+    polyline.bezier_points[0].co = (radius, 0, 0)
+    polyline.bezier_points[0].handle_left = (radius, -radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, 0)
+    polyline.bezier_points[0].handle_right = (radius, radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, 0)
+    polyline.bezier_points[1].co = (0, radius, 0)
+    polyline.bezier_points[1].handle_left = (radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, radius, 0)
+    polyline.bezier_points[1].handle_right = (-radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, radius, 0)
+    polyline.bezier_points[2].co = (-radius, 0, 0)
+    polyline.bezier_points[2].handle_left = (-radius, radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, 0)
+    polyline.bezier_points[2].handle_right = (-radius, -radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, 0)
+    polyline.bezier_points[3].co = (0, -radius, 0)
+    polyline.bezier_points[3].handle_left = (-radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, -radius, 0)
+    polyline.bezier_points[3].handle_right = (radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, -radius, 0)
+    
+    ret = bpy.data.objects.new('Helix', curveData)
+    
+    context.scene.objects.link(ret)
+    context.scene.objects.active = ret
+    
+    return ret
+
 # make_line
 # Returns a line segment
 # p1: First point of line segment
@@ -53,10 +94,6 @@ def make_line(p1, p2, n_subdiv, scene):
             z += dz
 
     scene.objects.active = objectData
-    #bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    #bpy.ops.curve.select_all(action='SELECT')
-    #bpy.ops.curve.subdivide(number_cuts = n_subdiv)
-    #bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
     
     return objectData
 
@@ -70,16 +107,11 @@ def make_tube_section(outer_radius, inner_radius, context):
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
-    #Create outer circle
-    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0))
-    outer_circle = context.active_object
-    outer_circle.scale = (outer_radius, outer_radius, 0)
-    #Create inner circle
-    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0))
-    inner_circle = context.active_object
-    inner_circle.scale = (inner_radius, inner_radius, 0)
+    # Create circles
+    outer_circle = make_circle(outer_radius, context)
+    inner_circle = make_circle(inner_radius, context)
 
-    #Join circles
+    # Join circles
     bpy.ops.object.select_all(action='DESELECT')
     inner_circle.select = True
     outer_circle.select = True
@@ -190,7 +222,7 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
     n_points = math.floor(length * pitch * points_per_rev)
 
     #Create a Bezier curve object
-    curveData = bpy.data.curves.new('Spiral', type = 'CURVE')
+    curveData = bpy.data.curves.new('HelixCurve', type = 'CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 10
     curveData.render_resolution_u = 20
@@ -291,20 +323,18 @@ def make_solid_conductor(length, radius, context):
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
 
-    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0))
-    circle = context.active_object
-    circle.scale = (radius, radius, 0)
+    circle = make_circle(radius, context)
+    circle.layers = JUNK_LAYER
     
     line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
     line.name = "Conductor"
     line.data.bevel_object = circle
     line.data.use_fill_caps = True
+
+    circle.parent = line
+    
     context.scene.objects.active = line
-    line.select = True
-    #bpy.ops.object.convert(target='MESH')
-    
-    #context.scene.objects.unlink(circle)
-    
+
     return line
 
 # make_stranded_conductor
@@ -320,9 +350,8 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
     points = strand_positions(conductor_radius - strand_radius, strand_radius)
 
     #Create a circle to be used as a bevel object
-    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0))
-    circle = context.active_object
-    circle.scale = (strand_radius, strand_radius, 0)
+    circle = make_circle(strand_radius, context)
+    circle.layers = JUNK_LAYER
 
     strands = []
     
@@ -359,30 +388,22 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
             path.data.fill_mode = 'FULL'
             strands.append(path)
             
-            # Convert beveled object to mesh
-            #bpy.ops.object.select_all(action='DESELECT')
-                
-            #path.select = True
-            #context.scene.objects.active = path
-            #bpy.ops.object.convert(target='MESH')
-
-            
             theta += dtheta
             
     # Join strands
     bpy.ops.object.select_all(action='DESELECT')
     for strand in strands:
         strand.select = True
-    context.scene.objects.active = strands[0]
+
+    ret = strands[0]
+    context.scene.objects.active = ret
 
     bpy.ops.object.join()
-    context.scene.objects.active.name = "Conductor"
 
+    ret.name = "Conductor"
+    circle.parent = ret
 
-    # Remove the circle that was used as a bevel object
-    #context.scene.objects.unlink(circle)
-
-    return context.scene.objects.active
+    return ret
 
 # make_conductor
 # Creates a parametric conductor and puts it in the scene
@@ -422,12 +443,12 @@ def make_conductor(length, conductor_radius, strand_radius,
 # context: Context in wich to create the bundle
 def make_braid_bundle(length, radius, pitch, strand_radius, bundle_size, clockwize, context):
     # Calculate angle between strands
-    dtheta = 2.0 * math.pi / ((radius * math.pi) / (2.6 * strand_radius))
+    dtheta = 2.0 * math.pi / ((radius * math.pi) / (1.6 * strand_radius))
  
     # Create circle
-    bpy.ops.curve.primitive_bezier_circle_add(location = (0, 0, 0))
-    circle = context.active_object
-    circle.scale = (2.0 * strand_radius, 2.0 * strand_radius, 0.0)
+    circle = make_circle(strand_radius, context)
+    circle.name = "StrandProfile"
+    circle.layers = JUNK_LAYER
     
     strands = []
     theta = 0.0
@@ -446,20 +467,13 @@ def make_braid_bundle(length, radius, pitch, strand_radius, bundle_size, clockwi
     bpy.ops.object.select_all(action = 'DESELECT')
     for strand in strands:
         strand.select = True
-    context.scene.objects.active = strands[0]
+    ret = strands[0]
+    context.scene.objects.active = ret
     bpy.ops.object.join()
-    ret = context.scene.objects.active
+    circle.parent = ret
         
     ret.name = 'BraidBundle'
     
-    # Convert to mesh
-    bpy.ops.object.select_all(action = 'DESELECT')
-    ret.select = True
-    bpy.ops.object.convert(target = 'MESH')
-    
-    # Remove circle
-    context.scene.objects.unlink(circle)
-   
     return ret
             
 # make_braid
