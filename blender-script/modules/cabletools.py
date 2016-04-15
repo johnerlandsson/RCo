@@ -388,6 +388,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
     progress = 0
 
     strands = []
+    orig_obj = None
     
     # iterate over the points and calculate positions of conductor helixes
     for row in points:
@@ -402,25 +403,31 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                     context))
                 continue
             
-            if about_eq(pitch, 0.0):
-                path = make_line((r, 0, 0), (r, 0, length), math.floor(length *
-                    200.0), context.scene)
+            if i == 0:
+                if about_eq(pitch, 0.0):
+                    path = make_line((r, 0, 0), (r, 0, length), math.floor(length *
+                        200.0), context.scene)
+                else:
+                    path = make_bezier_helix(length = length, 
+                                              pitch = pitch, 
+                                              radius = r,
+                                              clockwize = True,
+                                              n_subdivisions = 1,
+                                              context = context)
+
+                # Add bevel object
+                path.data.bevel_object = circle
+                path.data.use_fill_caps = True
+                path.data.use_fill_deform = True
+                path.data.fill_mode = 'FULL'
+
+                orig_obj = path
             else:
-                path = make_bezier_helix(length = length, 
-                                          pitch = pitch, 
-                                          radius = r,
-                                          clockwize = True,
-                                          n_subdivisions = 1,
-                                          context = context)
+                path = bpy.data.objects.new(orig_obj.name, orig_obj.data)
+                context.scene.objects.link(path)
 
-            path.rotation_euler = (0, 0, theta)
-
-            # Add bevel object
-            path.data.bevel_object = circle
-            path.data.use_fill_caps = True
-            path.data.use_fill_deform = True
-            path.data.fill_mode = 'FULL'
             strands.append(path)
+            path.rotation_euler = (0, 0, theta)
             
             # Update progress
             progress += 1
