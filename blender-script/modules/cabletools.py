@@ -353,6 +353,11 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
     circle = make_circle(strand_radius, context)
     circle.layers = JUNK_LAYER
 
+    #Create progress indicator
+    wm = bpy.context.window_manager
+    wm.progress_begin(0, len(points))
+    progress = 0
+
     strands = []
     
     # iterate over the points and calculate positions of conductor helixes
@@ -388,6 +393,11 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
             path.data.fill_mode = 'FULL'
             strands.append(path)
             
+            # Update progress
+            progress += 1
+            wm.progress_update(progress)
+
+            # Calculate next angle
             theta += dtheta
             
     # Join strands
@@ -402,6 +412,8 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 
     ret.name = "Conductor"
     circle.parent = ret
+
+    wm.progress_end()
 
     return ret
 
@@ -441,23 +453,19 @@ def make_conductor(length, conductor_radius, strand_radius,
 # bundle_size: Number of strands in each bundle
 # clockwize: True if spirals turn clockwize
 # context: Context in wich to create the bundle
-def make_braid_bundle(length, radius, pitch, strand_radius, bundle_size, clockwize, context):
+def make_braid_bundle(length, radius, pitch, strand_profile, strand_radius, bundle_size, clockwize, context):
     # Calculate angle between strands
     dtheta = 2.0 * math.pi / ((radius * math.pi) / (1.6 * strand_radius))
  
-    # Create circle
-    circle = make_circle(strand_radius, context)
-    circle.name = "StrandProfile"
-    circle.layers = JUNK_LAYER
-    
     strands = []
     theta = 0.0
     for i in range(bundle_size):
         # Create helix
         helix = make_bezier_helix(length, pitch, radius, clockwize, 2, context)
-        helix.data.bevel_object = circle
+        helix.data.bevel_object = strand_profile
         helix.data.use_fill_caps = True
         helix.rotation_euler = (0, 0, theta)
+        helix.name = "BraidStrand"
         
         strands.append(helix)
         
@@ -470,7 +478,6 @@ def make_braid_bundle(length, radius, pitch, strand_radius, bundle_size, clockwi
     ret = strands[0]
     context.scene.objects.active = ret
     bpy.ops.object.join()
-    circle.parent = ret
         
     ret.name = 'BraidBundle'
     
@@ -498,12 +505,16 @@ def make_braid(length, radius, pitch, strand_radius, bundle_size,
     # Create bundles
     theta = 0.0
     bundles = []
+    strand_profile = make_circle(strand_radius, context)
+    strand_profile.layers = JUNK_LAYER
     
     for i in range(n_bundle_pairs):
-        braid_cw = make_braid_bundle(length, radius, pitch, strand_radius, bundle_size, True, context)
+        braid_cw = make_braid_bundle(length, radius, pitch, strand_profile,
+                strand_radius, bundle_size, True, context)
         braid_cw.rotation_euler = (0, 0, theta)
         
-        braid_ccw = make_braid_bundle(length, radius, pitch, strand_radius, bundle_size, False, context)
+        braid_ccw = make_braid_bundle(length, radius, pitch, strand_profile,
+                strand_radius, bundle_size, False, context)
         braid_ccw.rotation_euler = (0, 0, theta + (dtheta / 2.0))
         
         bundles.append(braid_cw)
@@ -524,6 +535,8 @@ def make_braid(length, radius, pitch, strand_radius, bundle_size,
     ret = context.active_object
     ret.name = "Braid"
     ret.active_material = cm.CONDUCTOR_MATERIALS[material]()
+
+    strand_profile.parent = ret
     
     wm.progress_end()
     
