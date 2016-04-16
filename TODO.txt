@@ -1,3 +1,29 @@
+                  .-.
+                 /   \
+                 |   |
+                 ;-=-;
+                 |   |               .'`\
+                 | _ |              /   |
+                 |'-'|      .-.    /'. /
+                 |   | .-. /   \  /   /
+                 |   |/   \|   | /`=./
+                 ; _.'|   ||-=-|/   /
+                 |`   |-=-||   |`'.;
+      .-""-.     |    |   ||.-.|   |
+     /___   `\   ;`'-.;.-.;|| ||   |
+     '---;    '._/-._ || ||\\_//"-./
+          `\     ;   `\\_// `"`    \
+            \    .     `"`,`''--.. |
+             \             :      `\
+              `\'          ,       |
+                \          .       |
+                 '.       .        ;
+                  `\    _.        /
+                   |`-;  __ _ ..-'|
+                   |              |
+                   |              |
+                   |              |
+
 John
     Byt ut color picker mot drop-down meny med färgalternativ
     Lös tvåfärgade isolatorer
@@ -13,5 +39,7 @@ Rikard
     Testa nya cabletools funktioner så materialen fungerar som de ska
     Uppdatera blender-materials/cabletools.blend med de nya materialen
     Städa ingångar till material
+    Tvärsnitt scen
+    Tvärsnitt konturlinjer?
     Uppdatera blender-script/modules/cablematerials.py till att anväda de nya materialen
 
