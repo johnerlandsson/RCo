@@ -53,32 +53,31 @@ def join_objects(objects, context):
 # radius: Circle radius
 # context: Context in wich to create the circle
 def make_circle(radius, context):
-    curveData = bpy.data.curves.new('Circle', type = 'CURVE')
+    curveData = bpy.data.curves.new('CircleCurve', type = 'CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 1
     curveData.render_resolution_u = 20
     curveData.use_fill_caps = False
-     
-     
+
     polyline = curveData.splines.new('BEZIER')
     polyline.use_cyclic_u = True
     polyline.bezier_points.add(3)
     
-    polyline.bezier_points[0].co = (radius, 0, 0)
-    polyline.bezier_points[0].handle_left = (radius, -radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, 0)
-    polyline.bezier_points[0].handle_right = (radius, radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, 0)
-    polyline.bezier_points[1].co = (0, radius, 0)
-    polyline.bezier_points[1].handle_left = (radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, radius, 0)
-    polyline.bezier_points[1].handle_right = (-radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, radius, 0)
-    polyline.bezier_points[2].co = (-radius, 0, 0)
-    polyline.bezier_points[2].handle_left = (-radius, radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, 0)
-    polyline.bezier_points[2].handle_right = (-radius, -radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, 0)
-    polyline.bezier_points[3].co = (0, -radius, 0)
-    polyline.bezier_points[3].handle_left = (-radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, -radius, 0)
-    polyline.bezier_points[3].handle_right = (radius * BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO, -radius, 0)
+    dtheta = math.pi / 2.0
+    handle_length = (4.0/3.0) * math.tan(math.pi / (2.0 * ((2.0 * math.pi) / dtheta))) * radius
     
-    ret = bpy.data.objects.new('Helix', curveData)
-    
+    for i in range(4):
+        polyline.bezier_points[i].co[0] = radius * math.cos(dtheta * i) #X
+        polyline.bezier_points[i].co[1] = radius * math.sin(dtheta * i) #Y
+        
+        hh = math.sqrt(radius**2 + handle_length**2)
+        htheta = math.acos(radius / hh)
+        polyline.bezier_points[i].handle_left[0] = hh * math.cos((dtheta * i) - htheta)
+        polyline.bezier_points[i].handle_left[1] = hh * math.sin((dtheta * i) - htheta)
+        polyline.bezier_points[i].handle_right[0] = hh * math.cos((dtheta * i) + htheta)
+        polyline.bezier_points[i].handle_right[1] = hh * math.sin((dtheta * i) + htheta)
+        
+    ret = bpy.data.objects.new('Circle', curveData)
     context.scene.objects.link(ret)
     context.scene.objects.active = ret
     
@@ -699,18 +698,18 @@ def make_conductor_array(length, pitch, radius, conductor_radius,
     
     # Don't need the guide curve anymore
     context.scene.objects.unlink(guide_curve)
+
+    conductors = [conductor]
     
     # Duplicate and rotate
     theta = dtheta = (2.0 * math.pi) / n_conductors    
     for i in range(0, n_conductors - 1):
-        print(theta)
-        curveData = bpy.data.curves.new('ConductorCurve', type = 'CURVE')
-        ob_new = bpy.data.objects.new('Conductor', curveData)
-        ob_new.data = conductor.data
+        ob_new = deep_link_object(conductor, context)
         ob_new.rotation_euler = (0, 0, theta)
+        conductors.append(ob_new)
         ob_new.parent = conductor
-        context.scene.objects.link(ob_new)
 
         theta += dtheta
 
-    return conductor    
+    return conductor
+    #return join_objects(conductors, context)
