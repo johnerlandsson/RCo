@@ -1,0 +1,15 @@
+John
+    Byt ut color picker mot drop-down meny med färgalternativ
+    Lös tvåfärgade isolatorer
+    insulator_array funktion
+    make_lap funktion
+    Panels till alla funktioner
+    Felhantering i hela jävla cabletools.py
+
+Rikard
+    Skicka testrenderingar jonas_part.blend vy och ZY vy till jonas.adolfsson@amokabel.se
+    transparant lap material
+    Uppdatera blender-materials/cabletools.blend med de nya materialen
+    Städa ingångar till material
+    Uppdatera blender-script/modules/cablematerials.py till att anväda de nya materialen
+
