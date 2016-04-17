@@ -38,7 +38,7 @@ class TubeSectionUI(bpy.types.Panel):
     bl_idname = "OBJECT_PT_ct_tube_section_ui"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
-    bl_category = 'Cable Tools'
+    bl_category = 'Create'
     bl_translation_context = '*'
     bl_context = ''
 
