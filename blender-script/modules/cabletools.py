@@ -94,10 +94,8 @@ def make_circle(radius, context):
 # p1: First point of line segment
 # p2: Second point of line segment
 # scene: Scene in wich to add the line segment
-def make_line(p1, p2, n_subdiv, scene):
-    # Make sure we are in object mode
-    if bpy.ops.object.mode_set.poll():
-        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
+def make_line(p1, p2, n_subdiv, context):
+    scene = context.scene
 
     curveData = bpy.data.curves.new('Line', type = 'CURVE')
     curveData.dimensions = '3D'
@@ -273,9 +271,9 @@ def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided, 
 def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         color_name, context):
     # Create guide curve
-    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
+    line = make_line((0, 0, length), (0, 0, 0), 1, context)
     line.data.use_fill_caps = True
-    line.data.bevel_factor_start = peel_length
+    line.data.bevel_factor_start = peel_length * (1.0 / length)
     line.name = "Insulator"
     line.data.twist_mode = 'Z_UP'
     context.scene.objects.active = line
@@ -328,7 +326,7 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
     #Calculate limits
     if about_eq(pitch, 0.0):
         return make_line((0, 0, 0), (0, 0, length), 200.0 * length,
-                context.scene)
+                context)
 
     if about_eq(length, 0.0):
         print("make_bezier_helix: length is zero")
@@ -436,7 +434,7 @@ def make_solid_conductor(length, radius, context):
     circle = make_circle(radius, context)
     circle.layers = JUNK_LAYER
     
-    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
+    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context)
     line.name = "Conductor"
     line.data.bevel_object = circle
     line.data.use_fill_caps = True
@@ -483,7 +481,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
             if i == 0:
                 if about_eq(pitch, 0.0):
                     path = make_line((r, 0, 0), (r, 0, length), math.floor(length *
-                        200.0), context.scene)
+                        200.0), context)
                 else:
                     path = make_bezier_helix(length = length, 
                                               pitch = pitch, 
@@ -868,3 +866,14 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius, ins_inne
     ins_arr.name = "PartArray"
 
     return ins_arr
+
+def make_part(length, ins_radius, ins_color, ins_material, peel_length, cond_radius, 
+              cond_material, strand_radius, strand_pitch, context):
+    insulator = make_insulator(cond_radius, ins_radius, length, peel_length, 
+                               ins_material, ins_color, context)
+    conductor = make_conductor(length, cond_radius, strand_radius, strand_pitch, 
+                               cond_material, context)
+    conductor.parent = insulator
+    insulator.name = "Part"
+    
+    return insulator

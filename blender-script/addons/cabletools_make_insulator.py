@@ -10,21 +10,21 @@ import cabletools as ct
 bpy.types.Scene.CT_make_insulator_outer_dia = bpy.props.FloatProperty(
         name = "Outer Diameter",
         description = "Total diameter of the insulator",
-        default = 3.0,
+        default = 35.0,
         min = 1.0,
         max = 300.0)
 
 bpy.types.Scene.CT_make_insulator_inner_dia = bpy.props.FloatProperty(
         name = "Inner Diameter",
         description = "Total diameter of the insulators hole",
-        default = 1.62,
+        default = 30,
         min = 0.5,
         max = 250.0)
 
 bpy.types.Scene.CT_make_insulator_length = bpy.props.FloatProperty(
         name = "Length (m)",
         description = "Length of the insulator",
-        default = 1.5,
+        default = 0.23,
         min = 0.1,
         max = 10.0)
 
