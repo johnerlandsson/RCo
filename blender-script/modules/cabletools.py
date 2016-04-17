@@ -11,6 +11,12 @@ INSULATOR_MATERIALS = [('pvc', 'PVC', 'PVC'),
 LAP_MATERIALS = [('cu', 'CU', 'Standard copper'), 
                  ('nylon', 'Nylon', 'Nylon filt lap')]
 
+INSULATOR_COLORS = []
+for k in cm.INSULATOR_COLORS:
+    INSULATOR_COLORS.append((k, k, k))
+for k in cm.STRIPE_TYPES:
+    INSULATOR_COLORS.append((k, k, k))
+
 JUNK_LAYER = (False, False, False, False, False, False, False, False, False, False,
               False, False, False, False, False, False, False, False, False, True)
 
@@ -134,10 +140,6 @@ def make_line(p1, p2, n_subdiv, scene):
 # inner_radius: Radius of the inner circle
 # context: Context in wich to create it
 def make_tube_section(outer_radius, inner_radius, context):
-    # Make sure we are in object mode
-    if bpy.ops.object.mode_set.poll():
-        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
     # Create circles
     outer_circle = make_circle(outer_radius, context)
     inner_circle = make_circle(inner_radius, context)
@@ -216,11 +218,8 @@ def make_tube_section_slice(outer_radius, inner_radius, amount, mirror, context)
     if mirror:
         for p in polyline.bezier_points:
             p.co[0] *= -1
-            p.co[1] *= -1
             p.handle_right[0] *= -1
             p.handle_left[0] *= -1   
-            p.handle_right[1] *= -1
-            p.handle_left[1] *= -1   
 
     ret = bpy.data.objects.new('StripedTubeSection', curveData)
     context.scene.objects.link(ret)
@@ -228,43 +227,42 @@ def make_tube_section_slice(outer_radius, inner_radius, amount, mirror, context)
     
     return ret
 
-# insulator_stripe_vg
-# Creates a vertexgroup representing the slice(s) on an insulator to be colored
-# differently from the base color
-# object: Object to select vertices from
-# amount: Percentage of circomference
-# double_sided: Stripe on one side or both?
-def insulator_stripe_vg(object, amount, double_sided = True):
-    # Make sure we are working on a mesh object
-    if object.type != 'MESH':
-        return None
-    
-    # Make sure we are in edit mode
-    if bpy.ops.mode != 'EDIT':
-        bpy.ops.object.mode_set(mode = 'EDIT', toggle = False)
-    
-    # Calculate max/min angle
-    angle = 2.0 * math.pi * amount
+# TODO replace this with som matrix operation
+def rotate_point_xy(p, angle):
+    r = math.sqrt(p[0]**2 + p[1]**2)
+    theta = math.atan(p[1] / p[0])
+    p[0] = r * math.sin(theta + angle)
+    p[1] = r * math.cos(theta + angle)
+
+# make_striped_tube_section
+def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided, context):
     if double_sided:
-        angle /= 2.0
+        first = make_tube_section_slice(outer_radius, inner_radius, (1.0 - amount) / 2.0, False, context)
+        second = make_tube_section_slice(outer_radius, inner_radius, (1.0 - amount) / 2.0, True, context)
+        base = join_objects([first, second], context)
         
-    # Create new vertex group
-    mesh = bmesh.from_edit_mesh(object.data)
-    group = object.vertex_groups.new("Stripe")    
+        first = make_tube_section_slice(outer_radius, inner_radius, amount / 2.0, False, context)
+        second = make_tube_section_slice(outer_radius, inner_radius, amount / 2.0, True, context)
+        stripe = join_objects([first, second], context)
+        theta = math.pi
+    else:
+        base = make_tube_section_slice(outer_radius, inner_radius, amount, False, context)
+        stripe = make_tube_section_slice(outer_radius, inner_radius, amount, False, context)
+        theta = math.pi + (math.pi / 2)
+   
+    theta_offs = 0
+    for spline in stripe.data.splines:
+        for p in spline.bezier_points:
+            rotate_point_xy(p.co, theta + theta_offs)
+            rotate_point_xy(p.handle_left, theta + theta_offs)
+            rotate_point_xy(p.handle_right, theta + theta_offs)        
+            
+        theta_offs += math.pi
     
-    # Add vertices to group
-    group_items = []
-    for v in mesh.verts:
-        va = math.atan(v.co.x / v.co.y)
-        if not double_sided and v.co.y < 0.0:
-            continue
-        if va < angle / 2.0 and va > -angle / 2.0:
-            group_items.append(v.index)
-    # Switch back to object mode
-    bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)                            
-    group.add(group_items, 1.0, 'ADD')
-    
-    return group            
+    base.name = "TubeSectionBase"
+    stripe.name = "TubeSectionStripe"
+        
+    return base, stripe
 
 # make_insulator
 # Creates a tube representing the insulator
@@ -273,30 +271,44 @@ def insulator_stripe_vg(object, amount, double_sided = True):
 # length: Length of the part/cable in Z-axis
 # peel_length: How much of the conductor that is visible        
 def make_insulator(inner_radius, outer_radius, length, peel_length, material,
-        color, context):
-    # Make sure we are in object mode
-    if bpy.ops.object.mode_set.poll():
-        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
-    insulator_circles = make_tube_section(outer_radius, inner_radius, context) 
-
+        color_name, context):
+    # Create guide curve
     line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context.scene)
-    line.data.bevel_object = insulator_circles
     line.data.use_fill_caps = True
     line.data.bevel_factor_start = peel_length
     line.name = "Insulator"
-    
+    line.data.twist_mode = 'Z_UP'
     context.scene.objects.active = line
 
-    bpy.ops.object.select_all(action='DESELECT')
-    line.select = True
-    bpy.ops.object.convert(target='MESH')
-    
-    context.scene.objects.unlink(insulator_circles)
+    # Solid color insulator
+    if color_name in cm.INSULATOR_COLORS.keys():         
+        base_color = cm.INSULATOR_COLORS[color_name]
+        profile = make_tube_section(outer_radius, inner_radius, context) 
+        line.data.bevel_object = profile
+        line.active_material = cm.INSULATOR_MATERIALS[material](base_color)
+    # Striped insulator
+    elif color_name in cm.STRIPE_TYPES.keys(): #Striped insulator
+        stripe_data = cm.STRIPE_TYPES[color_name]
+        base_color = stripe_data[0]
+        stripe_color = stripe_data[1]
+        amount = stripe_data[2]
+        double_sided = stripe_data[3]
+        base_prof, stripe_prof = make_striped_tube_section(outer_radius, inner_radius, amount,
+                double_sided, context)
 
-    #Create material
-    line.active_material = cm.INSULATOR_MATERIALS[material](color)
+        stripe_line = bpy.data.objects.new('Stripe', line.data.copy())
+        context.scene.objects.link(stripe_line)
+        stripe_prof.parent = stripe_line
 
+        line.data.bevel_object = base_prof
+        line.active_material = cm.INSULATOR_MATERIALS[material](base_color)
+        base_prof.parent = line
+
+        stripe_line.data.bevel_object = stripe_prof
+        stripe_line.active_material = cm.INSULATOR_MATERIALS[material](stripe_color)
+        stripe_line.parent = line
+
+    # TODO handle color name error
     return line
 
 # about_eq
@@ -313,10 +325,6 @@ def about_eq(a, b):
 # radius: Radius of helix
 # context: context in wich to create the helix
 def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context):
-    # Make sure we are in object mode
-    if bpy.ops.object.mode_set.poll():
-        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
     #Calculate limits
     if about_eq(pitch, 0.0):
         return make_line((0, 0, 0), (0, 0, length), 200.0 * length,
@@ -427,10 +435,6 @@ def strand_positions(conductor_radius, strand_radius):
 # length: Total length of the conductor in Z-axis
 # radius: Radius of the conductor
 def make_solid_conductor(length, radius, context):
-    # Make sure we are in object mode
-    if bpy.ops.object.mode_set.poll():
-        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
     circle = make_circle(radius, context)
     circle.layers = JUNK_LAYER
     
@@ -450,10 +454,6 @@ def make_solid_conductor(length, radius, context):
 # Use convenience function make_conductor instead of calling this directly
 def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                             context):
-    # Make sure we are in object mode
-    if bpy.ops.object.mode_set.poll():
-        bpy.ops.object.mode_set(mode = 'OBJECT', toggle = False)
-
     #Create a list of points corresponding to the strand positions
     points = strand_positions(conductor_radius - strand_radius, strand_radius)
 

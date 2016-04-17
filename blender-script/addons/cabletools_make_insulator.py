@@ -28,17 +28,13 @@ bpy.types.Scene.CT_make_insulator_length = bpy.props.FloatProperty(
         min = 0.1,
         max = 10.0)
 
-bpy.types.Scene.CT_make_insulator_color = bpy.props.FloatVectorProperty(
-    name="Color",
-    description="Color value",
-    default = (0.0, 0.0, 0.0),
-    subtype='COLOR',
-    min = 0.0,
-    max = 1.0)
-
 bpy.types.Scene.CT_make_insulator_material = bpy.props.EnumProperty(
         items = ct.INSULATOR_MATERIALS,
         name = "Material")
+
+bpy.types.Scene.CT_make_insulator_color_name = bpy.props.EnumProperty(
+        items = ct.INSULATOR_COLORS,
+        name = 'Color name')
 
 # Operator class
 class MakeInsulator(bpy.types.Operator):
@@ -51,11 +47,11 @@ class MakeInsulator(bpy.types.Operator):
         outer_radius = scene.CT_make_insulator_outer_dia / 2000.0
         inner_radius = scene.CT_make_insulator_inner_dia / 2000.0
         length = scene.CT_make_insulator_length
-        color = scene.CT_make_insulator_color
         material = scene.CT_make_insulator_material
+        color_name = scene.CT_make_insulator_color_name
 
         ct.make_insulator(outer_radius, inner_radius, length, 0.0, material,
-                color, context)
+                color_name, context)
 
         return {'FINISHED'}
 
@@ -75,7 +71,7 @@ class MakeInsulatorUI(bpy.types.Panel):
         layout.prop(scene, "CT_make_insulator_outer_dia")
         layout.prop(scene, "CT_make_insulator_inner_dia")
         layout.prop(scene, "CT_make_insulator_length")
-        layout.prop(scene, "CT_make_insulator_color")
+        layout.prop(scene, "CT_make_insulator_color_name")
         layout.prop(scene, "CT_make_insulator_material")
         layout.operator("ct.make_insulator", text = "Make")
 
