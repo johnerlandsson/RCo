@@ -333,6 +333,9 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
     if about_eq(length, 0.0):
         print("make_bezier_helix: length is zero")
         return None
+    
+    if n_subdivisions < 1:
+        print("make_bezier_helix: n_subdivisions is zero")
 
     points_per_rev = 4.0 * n_subdivisions
     n_points = math.floor(length * pitch * points_per_rev)
@@ -346,49 +349,44 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
     polyline = curveData.splines.new('BEZIER')
     polyline.bezier_points.add(n_points)
     
-    #Create points
-    theta = 0.0
+    dtheta = (2.0 * math.pi) / points_per_rev
+    if clockwize:
+        dtheta *= -1
+    handle_length = (4.0/3.0) * math.tan(math.pi / (2.0 * ((2.0 * math.pi) / dtheta))) * radius
+    handle_radius = math.sqrt(radius**2 + handle_length**2)
+    htheta = math.acos(radius / handle_radius)
+    
+    dz = (length / n_points) / points_per_rev
+    
     for i in range(n_points + 1):
-        z = length * (i / n_points)
-        handle_hyp = math.sqrt(radius**2 + (radius / (points_per_rev / 2.0))**2)
-        h_theta = math.acos(radius / handle_hyp)
-
+        z = length - (length * (i / n_points))
+        polyline.bezier_points[i].co[0] = radius * math.cos(dtheta * i)
+        polyline.bezier_points[i].co[1] = radius * math.sin(dtheta * i)
+        polyline.bezier_points[i].co[2] = z
+        
         if clockwize:
-            x = radius * math.cos(theta)
-            y = radius * math.sin(theta)
-            lhx = handle_hyp * math.cos(theta - h_theta)
-            rhx = handle_hyp * math.cos(theta + h_theta)
-            lhy = handle_hyp * math.sin(theta - h_theta)
-            rhy = handle_hyp * math.sin(theta + h_theta)
+            handle_b = polyline.bezier_points[i].handle_left
+            handle_a = polyline.bezier_points[i].handle_right
+            tmpdz = dz * -1.0
         else:
-            x = radius * math.sin(theta)
-            y = radius * math.cos(theta)
-            lhx = handle_hyp * math.sin(theta - h_theta)
-            rhx = handle_hyp * math.sin(theta + h_theta)
-            lhy = handle_hyp * math.cos(theta - h_theta)
-            rhy = handle_hyp * math.cos(theta + h_theta)
-
-        polyline.bezier_points[i].co = (x, y, z)
+            handle_a = polyline.bezier_points[i].handle_left
+            handle_b = polyline.bezier_points[i].handle_right
+            tmpdz = dz
+                        
+        handle_a[0] = handle_radius * math.cos((dtheta * i) - htheta)
+        handle_a[1] = handle_radius * math.sin((dtheta * i) - htheta)
+        handle_a[2] = z + tmpdz
         
-        dhz = (length / n_points) / 4.0 
-        lhz = z - dhz
-        rhz = z + dhz
-    
-        polyline.bezier_points[i].handle_left = (lhx, lhy, lhz)
-        polyline.bezier_points[i].handle_right = (rhx, rhy, rhz)
-    
-        polyline.bezier_points[i].handle_left_type = 'ALIGNED'
-        polyline.bezier_points[i].handle_left_type = 'ALIGNED'
+        handle_b[0] = handle_radius * math.cos((dtheta * i) + htheta)
+        handle_b[1] = handle_radius * math.sin((dtheta * i) + htheta)
+        handle_b[2] = z - tmpdz
         
-        theta += (2.0 * math.pi * pitch * length) / n_points
+    ret = bpy.data.objects.new('Helix', curveData)
+    context.scene.objects.link(ret)
+    context.scene.objects.active = ret
+    
+    return ret
 
-    helixObject = bpy.data.objects.new('Helix', curveData)
-    context.scene.objects.link(helixObject)
-    context.scene.objects.active = helixObject
-    if not clockwize:
-        helixObject.rotation_euler = (0, 0, math.pi * 1.5)
-
-    return helixObject
 
 # strand_positions
 # Circle packing algorithm
@@ -801,12 +799,13 @@ def make_insulator_array(length, pitch, radius, outer_radius,
     
     dtheta = (2.0 * math.pi) / len(color_names)
     theta = 0.0
-    
+
     for color_name in color_names:
         guide_curve = make_bezier_helix(length, pitch, radius, clockwize, 1, context)
         guide_curve.data.use_fill_caps = True
         guide_curve.data.twist_mode = 'Z_UP'
-        guide_curve.data.bevel_factor_start = peel_length
+        helix_length = arclength(guide_curve)
+        guide_curve.data.bevel_factor_start = peel_length * (1/helix_length)
        
         # Solid colored insulator
         if color_name in cm.INSULATOR_COLORS.keys():
@@ -863,10 +862,6 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius, ins_inne
                                     context)
     ins_arr = make_insulator_array(length, pitch, radius, ins_outer_radius, ins_inner_radius,
                                    ins_material, ins_colors, clockwize, ins_peel_length, context)
-
-    if not clockwize:
-        theta = ((2.0 * math.pi) / n_parts) / 2
-        cond_arr.rotation_euler = (0, 0, theta)
 
     cond_arr.parent = ins_arr
 

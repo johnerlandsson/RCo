@@ -58,7 +58,7 @@ bpy.types.Scene.CT_make_part_array_clockwize = bpy.props.BoolProperty(
 bpy.types.Scene.CT_make_part_array_ins_peel_length = bpy.props.FloatProperty(
         name = "Peel length(mm)",
         description = "How much of the insulator is peeled off",
-        default = 30,
+        default = 10,
         min = 1,
         max = 100.0)
 
@@ -70,7 +70,7 @@ bpy.types.Scene.CT_make_part_array_colors = bpy.props.StringProperty(
 bpy.types.Scene.CT_make_part_array_radius = bpy.props.FloatProperty(
         name = "Radius (mm)",
         description = "Radius of the array",
-        default = 5,
+        default = 10,
         min = 1,
         max = 100.0)
 
