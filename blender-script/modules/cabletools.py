@@ -571,7 +571,7 @@ def make_braid_bundle(length, radius, pitch, strand_profile, strand_radius,
     for i in range(bundle_size):
         # Create helix
         if i == 0:
-            helix = make_bezier_helix(length, pitch, radius, clockwize, 2, context)
+            helix = make_bezier_helix(length, pitch, radius, clockwize, 1, context)
             helix.data.bevel_object = strand_profile
             helix.data.use_fill_caps = True
             strands.append(helix)
@@ -792,4 +792,84 @@ def make_conductor_array(length, pitch, radius, conductor_radius,
         theta += dtheta
 
     return conductor
-    #return join_objects(conductors, context)
+
+def make_insulator_array(length, pitch, radius, outer_radius, 
+                        inner_radius, material, colors, clockwize, 
+                        peel_length, context):
+    ret = None
+    color_names = colors.split()
+    
+    dtheta = (2.0 * math.pi) / len(color_names)
+    theta = 0.0
+    
+    for color_name in color_names:
+        guide_curve = make_bezier_helix(length, pitch, radius, clockwize, 1, context)
+        guide_curve.data.use_fill_caps = True
+        guide_curve.data.twist_mode = 'Z_UP'
+        guide_curve.data.bevel_factor_start = peel_length
+       
+        # Solid colored insulator
+        if color_name in cm.INSULATOR_COLORS.keys():
+            base_profile = make_tube_section(outer_radius, inner_radius, context)
+            base_profile.layers = JUNK_LAYER
+            base_profile.parent = guide_curve
+            guide_curve.data.bevel_object = base_profile
+            color = cm.INSULATOR_COLORS[color_name]
+            guide_curve.active_material = cm.INSULATOR_MATERIALS[material](color)
+        # Striped insulator
+        elif color_name in cm.STRIPE_TYPES.keys():
+            stripe_data = cm.STRIPE_TYPES[color_name]
+            base_color = stripe_data[0]
+            stripe_color = stripe_data[1]
+            amount = stripe_data[2]
+            double_sided = stripe_data[3]
+            
+            base_profile, stripe_profile = make_striped_tube_section(inner_radius, outer_radius, amount, double_sided, context)
+
+            # Make a copy of the guidecurve for our stripe
+            stripe_curve = bpy.data.objects.new('StripeCurve', guide_curve.data.copy())
+            context.scene.objects.link(stripe_curve)
+            stripe_curve.parent = guide_curve
+
+            stripe_profile.parent = stripe_curve
+            base_profile.parent = guide_curve
+            
+            guide_curve.data.bevel_object = base_profile
+            guide_curve.active_material = cm.INSULATOR_MATERIALS[material](base_color)
+            stripe_curve.data.bevel_object = stripe_profile
+            stripe_curve.active_material = cm.INSULATOR_MATERIALS[material](stripe_color)
+        # TODO handle color name error
+            
+        guide_curve.rotation_euler = (0, 0, theta)
+        theta += dtheta
+        
+        if ret == None:
+            ret = guide_curve
+        else:
+            guide_curve.parent = ret
+            
+    ret.name = "InsulatorArray"
+    
+    return ret
+
+def make_part_array(length, pitch, radius, clockwize, ins_outer_radius, ins_inner_radius,
+                    ins_material, ins_colors, ins_peel_length, cond_radius, cond_strand_pitch,
+                    cond_material, cond_strand_radius, context ):
+                        
+    n_parts = len(ins_colors.split())
+    
+    cond_arr = make_conductor_array(length, pitch, radius, cond_radius, cond_strand_pitch,
+                                    cond_material, cond_strand_radius, clockwize, n_parts, 
+                                    context)
+    ins_arr = make_insulator_array(length, pitch, radius, ins_outer_radius, ins_inner_radius,
+                                   ins_material, ins_colors, clockwize, ins_peel_length, context)
+
+    if not clockwize:
+        theta = ((2.0 * math.pi) / n_parts) / 2
+        cond_arr.rotation_euler = (0, 0, theta)
+
+    cond_arr.parent = ins_arr
+
+    ins_arr.name = "PartArray"
+
+    return ins_arr
