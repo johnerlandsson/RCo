@@ -25,7 +25,6 @@
                    |              |
 
 John
-    insulator_array funktion
     make_lap funktion
     Panels till alla funktioner
     Enheter i panels
