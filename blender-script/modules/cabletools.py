@@ -22,6 +22,10 @@ JUNK_LAYER = (False, False, False, False, False, False, False, False, False, Fal
 
 BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO = 0.55213
 
+class InputError(Exception):
+    def __init__(self, msg):
+        super(CableToolsInputError, self).__init__(msg)
+
 # deep_link_objects
 # Returns a copy of the passed object. Data is linked
 # object: Object to copy
@@ -59,6 +63,9 @@ def join_objects(objects, context):
 # radius: Circle radius
 # context: Context in wich to create the circle
 def make_circle(radius, context):
+    if radius <= 0:
+        raise InputError("Invalid radius")
+
     curveData = bpy.data.curves.new('CircleCurve', type = 'CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 1
@@ -95,6 +102,11 @@ def make_circle(radius, context):
 # p2: Second point of line segment
 # scene: Scene in wich to add the line segment
 def make_line(p1, p2, n_subdiv, context):
+    if n_subdiv <= 0:
+        raise InputError("No subdivisions set")
+    elif p1 == p2:
+        raise InputError("No distance between points")
+
     scene = context.scene
 
     curveData = bpy.data.curves.new('Line', type = 'CURVE')
@@ -159,7 +171,7 @@ def make_tube_section_slice(outer_radius, inner_radius, amount, mirror, context)
     curveData = bpy.data.curves.new('StripedTubeSection', type = 'CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 1
-    curveData.render_resolution_u = 20
+    curveData.render_resolution_u = 2 
     curveData.use_fill_caps = False
 
     polyline = curveData.splines.new('BEZIER')
@@ -697,110 +709,19 @@ def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
     
     return ret
 
-#################################################################################################
-# The following functions has been lifted from Curve Tools by Zak
-# Permission pending
-# https://wiki.blender.org/index.php/Extensions:2.6/Py/Scripts/Curve/Curve_Tools
-#################################################################################################
-
-#cubic bezier value
-def cubic(p, t):
-    return p[0]*(1.0-t)**3.0 + 3.0*p[1]*t*(1.0-t)**2.0 + 3.0*p[2]*(t**2.0)*(1.0-t) + p[3]*t**3.0
-
-#gets a bezier segment's control points on global coordinates
-def getbezpoints(spl, mt, seg=0):
-    points = spl.bezier_points
-    p0 = mt * points[seg].co
-    p1 = mt * points[seg].handle_right
-    p2 = mt * points[seg+1].handle_left
-    p3 = mt * points[seg+1].co
-    return p0, p1, p2, p3
-
-#calculates a global parameter t along all control points
-#t=0 begining of the curve
-#t=1 ending of the curve
-
-def calct(obj, t):
-
-    spl=None
-    mw = obj.matrix_world
-    if obj.data.splines.active==None:
-        if len(obj.data.splines)>0:
-            spl=obj.data.splines[0]
-    else:
-        spl = obj.data.splines.active
-
-    if spl==None:
-        return False
-
-    if spl.type=="BEZIER":
-        points = spl.bezier_points
-        nsegs = len(points)-1
-
-        d = 1.0/nsegs
-        seg = int(t/d)
-        t1 = t/d - int(t/d)
-
-        if t==1:
-            seg-=1
-            t1 = 1.0
-
-        p = getbezpoints(spl,mw, seg)
-
-        coord = cubic(p, t1)
-
-        return coord
-
-    elif spl.type=="NURBS":
-        data = getnurbspoints(spl, mw)
-        pts = data[0]
-        ws = data[1]
-        order = spl.order_u
-        n = len(pts)
-        ctype = spl.use_endpoint_u
-        kv = knots(n, order, ctype)
-
-        coord = C(t, order-1, pts, ws, kv)
-
-        return coord
-
-def arclength(obj):
-    length = 0.0
-
-    if obj.type=="CURVE":
-        prec = 1000 #precision
-        inc = 1/prec #increments
-
-        for i in range(0, prec):
-            ti = i*inc
-            tf = (i+1)*inc
-            a = calct(obj, ti)
-            b = calct(obj, tf)
-            r = (b-a).magnitude
-            length+=r
-
-    return length
-
-#################################################################################################
-# End Curve Tools functions
-#################################################################################################
-
 # helical_length
 # Returns the length of a helix
 # radius: Radius of the helix
 # pitch: Number of revolutions per length unit of the helix
 # length: Axial length of the helix
 def helical_length(radius, pitch, length):
-# TODO something wrong here
     circ = 2.0 * radius * math.pi
-    pl = length / pitch
 
-    rev_length = math.sqrt(circ**2 + pl**2)
+    rev_length = math.sqrt(circ**2 + length**2)
 
     n_revs = length * pitch
 
     return rev_length * n_revs
-
 
 # make_conductor_array
 # Returns a circular array of conductors
@@ -825,7 +746,7 @@ def make_conductor_array(length, pitch, radius, conductor_radius,
     guide_curve = make_bezier_helix(length, pitch, radius, clockwize, 1, context)
     
     # Create conductor
-    conductor = make_conductor(arclength(guide_curve), 
+    conductor = make_conductor(helical_length(radius, pitch, length), 
                                conductor_radius, 
                                strand_radius,
                                strand_pitch,
@@ -867,8 +788,7 @@ def make_insulator_array(length, pitch, radius, outer_radius,
         guide_curve = make_bezier_helix(length, pitch, radius, clockwize, 1, context)
         guide_curve.data.use_fill_caps = True
         guide_curve.data.twist_mode = 'Z_UP'
-        helix_length = arclength(guide_curve)
-        #helix_length = helical_length(radius, pitch, length)
+        helix_length = helical_length(radius, pitch, length)
         guide_curve.data.bevel_factor_start = peel_length * (1/helix_length)
        
         # Solid colored insulator

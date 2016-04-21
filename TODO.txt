@@ -25,15 +25,17 @@
                    |              |
 
 John
-    make_lap funktion
-    Felhantering i hela jävla cabletools.py
+    * make_lap funktion
+        * Väntar på lap material
+    * Felhantering i hela jävla cabletools.py
+    * Filler
 
 Rikard
-    transparant lap material
-    Testa nya cabletools funktioner så materialen fungerar som de ska
-    Uppdatera blender-materials/cabletools.blend med de nya materialen
-    Städa ingångar till material
-    Tvärsnitt scen
-    Tvärsnitt konturlinjer?
-    Uppdatera blender-script/modules/cablematerials.py till att anväda de nya materialen
+    * transparant lap material
+    * Testa nya cabletools funktioner så materialen fungerar som de ska
+    * Uppdatera blender-materials/cabletools.blend med de nya materialen
+    * Städa ingångar till material
+    * Tvärsnitt scen
+    * Tvärsnitt konturlinjer?
+    * Uppdatera blender-script/modules/cablematerials.py till att anväda de nya materialen
 
