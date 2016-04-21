@@ -20,8 +20,6 @@ for k in cm.STRIPE_TYPES:
 JUNK_LAYER = (False, False, False, False, False, False, False, False, False, False,
               False, False, False, False, False, False, False, False, False, True)
 
-BEZIER_CIRCLE_HANDLE_TO_RADIUS_RATIO = 0.55213
-
 class InputError(Exception):
     def __init__(self, msg):
         super(CableToolsInputError, self).__init__(msg)
@@ -150,6 +148,11 @@ def make_line(p1, p2, n_subdiv, context):
 # inner_radius: Radius of the inner circle
 # context: Context in wich to create it
 def make_tube_section(outer_radius, inner_radius, context):
+    if outer_radius <= 0.0:
+        raise InputError("Invalid outer radius")
+    elif inner_radius <= 0.0:
+        raise InputError("Invalid inner radius")
+
     # Create circles
     outer_circle = make_circle(outer_radius, context)
     inner_circle = make_circle(inner_radius, context)
@@ -245,7 +248,20 @@ def rotate_point_xy(p, angle):
     p[1] = r * math.cos(theta + angle)
 
 # make_striped_tube_section
+# Creates two curve objects representing the cross section of a striped
+# insulator.
+# 
+# outer_radius: Radius of outer circle
+# inner_radius: Radius of inner circle
+# amount: Percentage of circomference to be striped
+# double_sided: Split stripe into two slices
+# context: Context in wich to create the curve
 def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided, context):
+    if amount > 0.51 or amount < 0.1:
+        raise InputError("Please select an amount between 0.1 and 0.51")
+    elif outer_radius <= 0.0 or inner_radius <= 0.0:
+        raise InputError("Invalid radius")
+
     if double_sided:
         first = make_tube_section_slice(outer_radius, inner_radius, (1.0 - amount) / 2.0, False, context)
         second = make_tube_section_slice(outer_radius, inner_radius, (1.0 - amount) / 2.0, True, context)
@@ -317,8 +333,9 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         stripe_line.data.bevel_object = stripe_prof
         stripe_line.active_material = cm.INSULATOR_MATERIALS[material](stripe_color)
         stripe_line.parent = line
+    else:
+        raise InputError("\"%s\" is not a valid color:" %color_name)
 
-    # TODO handle color name error
     return line
 
 # about_eq
@@ -341,11 +358,9 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
                 context)
 
     if about_eq(length, 0.0):
-        print("make_bezier_helix: length is zero")
-        return None
-    
-    if n_subdivisions < 1:
-        print("make_bezier_helix: n_subdivisions is zero")
+        raise InputError("Length is zero")
+    elif n_subdivisions < 1:
+        raise InputError("n_subdivisions is zero")
 
     points_per_rev = 4.0 * n_subdivisions
     n_points = math.floor(length * pitch * points_per_rev)
@@ -400,6 +415,7 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
 
 # strand_positions
 # Circle packing algorithm
+#
 # conductor_radius: Radius of the larger circle
 # strand_radius: Radius of the smaller circle
 # Returns: A list of tuples representing the points
@@ -775,6 +791,19 @@ def make_conductor_array(length, pitch, radius, conductor_radius,
 
     return conductor
 
+# make_insulator_array
+# Creates a circular array of insulators
+#
+# length: Axial length of the array
+# pitch: Number of revoutions per length unit
+# radius: Radius of the array
+# outer_radius: Outer radius of individual insulators
+# inner_radius: Inner radius of individual insulators
+# material: String representing the name of insulator material
+# colors: Whitespace separated string of color names
+# clockwize: Rotation direction of array helix
+# peel_length: How much of the insulator end to be removed
+# context: Context in wich to create the array
 def make_insulator_array(length, pitch, radius, outer_radius, 
                         inner_radius, material, colors, clockwize, 
                         peel_length, context):
@@ -821,7 +850,8 @@ def make_insulator_array(length, pitch, radius, outer_radius,
             guide_curve.active_material = cm.INSULATOR_MATERIALS[material](base_color)
             stripe_curve.data.bevel_object = stripe_profile
             stripe_curve.active_material = cm.INSULATOR_MATERIALS[material](stripe_color)
-        # TODO handle color name error
+        else:
+            raise InputError("\"%s\" is not a valid color name" %color)
             
         guide_curve.rotation_euler = (0, 0, theta)
         theta += dtheta
