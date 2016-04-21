@@ -26,12 +26,9 @@
 
 John
     make_lap funktion
-    Panels till alla funktioner
-    Enheter i panels
     Felhantering i hela jävla cabletools.py
 
 Rikard
-    Skicka testrenderingar jonas_part.blend vy och ZY vy till jonas.adolfsson@amokabel.se
     transparant lap material
     Testa nya cabletools funktioner så materialen fungerar som de ska
     Uppdatera blender-materials/cabletools.blend med de nya materialen

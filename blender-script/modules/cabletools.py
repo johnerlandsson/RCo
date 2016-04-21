@@ -244,7 +244,7 @@ def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided, 
         stripe = join_objects([first, second], context)
         theta = math.pi
     else:
-        base = make_tube_section_slice(outer_radius, inner_radius, amount, False, context)
+        base = make_tube_section_slice(outer_radius, inner_radius, 1.0 - amount, False, context)
         stripe = make_tube_section_slice(outer_radius, inner_radius, amount, False, context)
         theta = math.pi + (math.pi / 2)
    
