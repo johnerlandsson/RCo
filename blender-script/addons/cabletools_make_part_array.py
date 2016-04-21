@@ -9,25 +9,31 @@ import cabletools as ct
 
 # Create properties
 bpy.types.Scene.CT_make_part_array_cond_diameter = bpy.props.FloatProperty(
-        name = "Conductor diameter (mm)",
+        name = "Conductor diameter",
         description = "Total diameter of the conductor",
-        default = 7.5,
-        min = 1.0,
-        max = 20.0)
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.0075,
+        min = 0.001,
+        max = 0.02)
 
 bpy.types.Scene.CT_make_part_array_cond_strand_dia = bpy.props.FloatProperty(
-        name = "Strand Diameter (mm)",
+        name = "Strand Diameter",
         description = "Total diameter of the individual strands",
-        default = 0.4,
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.0004,
         min = 0.0,
-        max = 0.5)
+        max = 0.005)
 
 bpy.types.Scene.CT_make_part_array_cond_pitch = bpy.props.FloatProperty(
         name = "Conductor pitch",
-        description = "Number of revolutions per length unit",
-        default = 8.0,
-        min = 0.0,
-        max = 20.0)
+        description = "Axial distance between revolutions",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.045,
+        min = 0.005,
+        max = 1.0)
 
 bpy.types.Scene.CT_make_part_array_cond_material = bpy.props.EnumProperty(
         items = ct.CONDUCTOR_MATERIALS,
@@ -36,13 +42,17 @@ bpy.types.Scene.CT_make_part_array_cond_material = bpy.props.EnumProperty(
 bpy.types.Scene.CT_make_part_array_ins_outer_dia = bpy.props.FloatProperty(
         name = "Insulator Diameter",
         description = "Total diameter of the insulator",
-        default = 9.9,
-        min = 1.0,
-        max = 30.0)
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.0099,
+        min = 0.001,
+        max = 0.03)
 
 bpy.types.Scene.CT_make_part_array_length = bpy.props.FloatProperty(
-        name = "Length (m)",
-        description = "Length of the array in Z-axis",
+        name = "Length",
+        description = "Axial length of array",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
         default = 0.25,
         min = 0.2,
         max = 1.0)
@@ -56,11 +66,13 @@ bpy.types.Scene.CT_make_part_array_clockwize = bpy.props.BoolProperty(
         description = "Rotation direction of array")
 
 bpy.types.Scene.CT_make_part_array_ins_peel_length = bpy.props.FloatProperty(
-        name = "Peel length(mm)",
+        name = "Peel length",
         description = "How much of the insulator is peeled off",
-        default = 10,
-        min = 1,
-        max = 100.0)
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.01,
+        min = 0.001,
+        max = 0.1)
 
 bpy.types.Scene.CT_make_part_array_colors = bpy.props.StringProperty(
         name = "Colors",
@@ -68,18 +80,22 @@ bpy.types.Scene.CT_make_part_array_colors = bpy.props.StringProperty(
         default = "white brown black white brown black")
 
 bpy.types.Scene.CT_make_part_array_radius = bpy.props.FloatProperty(
-        name = "Radius (mm)",
+        name = "Radius",
         description = "Radius of the array",
-        default = 10,
-        min = 1,
-        max = 100.0)
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.01,
+        min = 0.001,
+        max = 0.1)
 
 bpy.types.Scene.CT_make_part_array_pitch = bpy.props.FloatProperty(
         name = "Pitch",
-        description = "Number of revolutions per meter",
-        default = 4,
-        min = 1,
-        max = 20.0)
+        description = "Axial distans between array revolutions",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.25,
+        min = 0.005,
+        max = 2)
 
 # Operator class
 class MakePartArray(bpy.types.Operator):
@@ -92,22 +108,22 @@ class MakePartArray(bpy.types.Operator):
         
         # Array params
         length = scene.CT_make_part_array_length
-        radius = scene.CT_make_part_array_radius / 1000.0
-        pitch = scene.CT_make_part_array_pitch
+        radius = scene.CT_make_part_array_radius
+        pitch = 1.0 / scene.CT_make_part_array_pitch
         clockwize = scene.CT_make_part_array_clockwize
 
         # Insulator params
-        outer_radius = scene.CT_make_part_array_ins_outer_dia / 2000.0
-        inner_radius = scene.CT_make_part_array_cond_diameter / 2000.0
+        outer_radius = scene.CT_make_part_array_ins_outer_dia / 2.0
+        inner_radius = scene.CT_make_part_array_cond_diameter / 2.0
         insulator_material = scene.CT_make_part_array_ins_material
         insulator_colors = scene.CT_make_part_array_colors
-        peel_length = scene.CT_make_part_array_ins_peel_length / 1000.0
+        peel_length = scene.CT_make_part_array_ins_peel_length
 
         # Conductor params
         conductor_radius = inner_radius
-        conductor_strand_radius = scene.CT_make_part_array_cond_strand_dia / 2000.0
+        conductor_strand_radius = scene.CT_make_part_array_cond_strand_dia / 2.0
         conductor_material = scene.CT_make_part_array_cond_material
-        conductor_pitch = scene.CT_make_part_array_cond_pitch
+        conductor_pitch = 1.0 / scene.CT_make_part_array_cond_pitch
 
         # Create array
         ct.make_part_array(length = length,

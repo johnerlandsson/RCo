@@ -342,7 +342,7 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
     curveData = bpy.data.curves.new('HelixCurve', type = 'CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 1
-    curveData.render_resolution_u = 20
+    curveData.render_resolution_u = 5 
     curveData.use_fill_caps = True  
     polyline = curveData.splines.new('BEZIER')
     polyline.bezier_points.add(n_points)
@@ -354,7 +354,7 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
     handle_radius = math.sqrt(radius**2 + handle_length**2)
     htheta = math.acos(radius / handle_radius)
     
-    dz = (length / n_points) / points_per_rev
+    dz = (length / (length * pitch * 2 * math.pi)) * htheta
     
     for i in range(n_points + 1):
         z = length - (length * (i / n_points))
@@ -545,109 +545,157 @@ def make_conductor(length, conductor_radius, strand_radius,
 
     return conductor
 
-# make_braid_bundle
-# Helper function to create a bundle of spiraling strands.
-# Used by make_braid
+# make_braid_strand
+# Creates a helical strand with alternating radi to be used with make_braid
+# function.
 #
-# length: Length of spirals in Z-axis
-# radius: Radius of spirals
-# pitch: Number of revolutions per length unit
-# strand_profile: Bevel object for the helixes
-# strand_radius: Radius of individual strands
-# bundle_size: Number of strands in each bundle
-# clockwize: True if spirals turn clockwize
-# context: Context in wich to create the bundle
-def make_braid_bundle(length, radius, pitch, strand_profile, strand_radius, 
-                        bundle_size, clockwize, context):
-    # Calculate angle between strands
-    dtheta = 2.0 * math.pi / ((radius * math.pi) / (1.6 * strand_radius))
- 
-    strands = []
-    theta = 0.0
-    for i in range(bundle_size):
-        # Create helix
-        if i == 0:
-            helix = make_bezier_helix(length, pitch, radius, clockwize, 1, context)
-            helix.data.bevel_object = strand_profile
-            helix.data.use_fill_caps = True
-            strands.append(helix)
+# length: Axial length of helix
+# radius: Radius of strand position
+# pitch: Number of revolutions per length unit in helix
+# points_per_rev: Number of points on helix for each revolution
+# strand_radius: Radius of the strand
+# clockwize: Rotation direction of helix
+# context: Context in wich to create the strand
+def make_braid_strand(length, radius, pitch, points_per_rev, strand_radius, clockwize, context):
+    # Calculate angle between each point
+    dtheta = (2.0 * math.pi) / points_per_rev
+    if not clockwize:
+        dtheta *= -1  
+  
+    # Calculate total number of points
+    n_points = math.floor(points_per_rev * pitch * length)
+
+    # Calculate handle offsets
+    handle_length = (4.0/3.0) * math.tan(math.pi / (2.0 * ((2.0 * math.pi) / dtheta))) * radius
+    handle_radius = math.sqrt(radius**2 + handle_length**2)
+    htheta = math.acos(radius / handle_radius)
+    
+    # Calculate z offset for handles
+    dz = (length / (length * pitch * 2 * math.pi)) * htheta
+
+    #Create a Bezier curve object
+    curveData = bpy.data.curves.new('HelixCurve', type = 'CURVE')
+    curveData.dimensions = '3D'
+    curveData.resolution_u = 1
+    curveData.render_resolution_u = 3
+    curveData.use_fill_caps = True  
+    polyline = curveData.splines.new('BEZIER')
+    polyline.bezier_points.add(n_points)
+    
+    # Determine start offset of alternating point radius    
+    if clockwize:
+        offs = 1
+    else:
+        offs = 5
+    
+    z = 0.0
+    for i in range(n_points + 1):
+        # Calculate z position of point
+        z = length * (i / n_points)
+        
+        # Determine if point is to be pulled in or out
+        if offs >= 0 and offs <= 2:
+            dradius = strand_radius * 1.1
+        elif offs >= 4 and offs <= 6:
+            dradius = strand_radius * -1.1
         else:
-            helix = deep_link_object(strands[0], context)
-            strands.append(helix)
-            
-        helix.rotation_euler = (0, 0, theta)
-        helix.name = "BraidStrand"
+            dradius = 0
+        offs += 1
+        if offs > 7:
+            offs = 0
+
+        # Calculate point position
+        polyline.bezier_points[i].co[0] = (radius + dradius) * math.cos(dtheta * i)
+        polyline.bezier_points[i].co[1] = (radius + dradius) * math.sin(dtheta * i)
+        polyline.bezier_points[i].co[2] = z
         
-        strands.append(helix)
+        # Calculate handle positions
+        if not clockwize:
+            handle_b = polyline.bezier_points[i].handle_left
+            handle_a = polyline.bezier_points[i].handle_right
+            tmpdz = dz
+        else:
+            handle_a = polyline.bezier_points[i].handle_left
+            handle_b = polyline.bezier_points[i].handle_right
+            tmpdz = dz * -1.0
         
-        theta += dtheta
-            
-    return join_objects(strands, context)
-            
+        handle_a[0] = (handle_radius + dradius) * math.cos((dtheta * i) - htheta)
+        handle_a[1] = (handle_radius + dradius) * math.sin((dtheta * i) - htheta)
+        handle_a[2] = z + tmpdz
+        
+        handle_b[0] = (handle_radius + dradius) * math.cos((dtheta * i) + htheta)
+        handle_b[1] = (handle_radius + dradius) * math.sin((dtheta * i) + htheta)
+        handle_b[2] = z - tmpdz
+    
+    # Create object    
+    ret = bpy.data.objects.new('Helix', curveData)
+    context.scene.objects.link(ret)
+    context.scene.objects.active = ret
+    
+    return ret
+
 # make_braid
-# Creates a cable braid. 
+# Creates a pleated tube object
 #
-# length: Length of spirals in Z-axis
-# radius: Radius of spirals
-# pitch: Number of revolutions per length unit
-# strand_radius: Radius of individual strands
+# length: Axial length of braid
+# radius: Radius of strand positions
 # bundle_size: Number of strands in each bundle
-# n_bundle_pairs: Number of clockwize and anticlockwize bundles
-# material: Name of the material
-# context: Context in wich to create the bundle
-def make_braid(length, radius, pitch, strand_radius, bundle_size,
-        n_bundle_pairs, material, context):
-    # Calculate angle between bundles
-    dtheta = 2.0 * math.pi / n_bundle_pairs
-    
+# n_bundle_pairs: Number of spinacles going in each direction
+# pitch: Number of revolutions per length unit
+# strand_radius: Radius of each individual strand
+# material: String describing the conductor material
+# context: Context in wich to create the braid
+def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
+        strand_radius, material, context):
+    # Calculate total number of bundles
+    n_bundles = int(n_bundle_pairs * 2)
+
+    #Create progress indicator
     wm = bpy.context.window_manager
-    wm.progress_begin(0, n_bundle_pairs)
+    wm.progress_begin(0, n_bundles + bundle_size)
     
-    # Create bundles
-    theta = 0.0
-    cw_bundles = []
-    ccw_bundles = []
+    # Create shared bevel object
     strand_profile = make_circle(strand_radius, context)
-    strand_profile.layers = JUNK_LAYER
-    strand_profile.name = "StrandProfile"
-    
-    for i in range(n_bundle_pairs):
-        # Keep track of first strands
-        if i == 0:
-            bundle_cw = make_braid_bundle(length, radius, pitch, strand_profile,
-                    strand_radius, bundle_size, True, context)
-            bundle_ccw = make_braid_bundle(length, radius, pitch, strand_profile,
-                    strand_radius, bundle_size, False, context)
-            bundle_ccw.rotation_euler = (0, 0, dtheta / 2.0)
-        # Create copies of original strands
-        else:
-            bundle_cw = deep_link_object(cw_bundles[0], context, True)
-            bundle_cw.rotation_euler = (0, 0, theta)
-            cw_bundles.append(bundle_cw)
-            
-            bundle_ccw = deep_link_object(ccw_bundles[0], context, True)
-            bundle_ccw.rotation_euler = (0, 0, theta + (dtheta / 2.0))
-            ccw_bundles.append(bundle_ccw)
+
+    # Calculate angles
+    dtheta = (2.0 * math.pi) / n_bundles
+    strand_dtheta = (2.0 * math.pi) / ((radius * math.pi) / strand_radius)
         
-        cw_bundles.append(bundle_cw)
-        ccw_bundles.append(bundle_ccw)
-                
-        theta += dtheta
-        wm.progress_update(i)
+    # Create clockwize strand
+    cw_strands = [make_braid_strand(length, radius, pitch, n_bundles * 4, strand_radius, True, context)]
+    cw_strands[0].data.bevel_object = strand_profile
+    # Create counter-clockwize strand
+    ccw_strands = [make_braid_strand(length, radius, pitch, n_bundles * 4, strand_radius, False, context)]
+    ccw_strands[0].rotation_euler = (0, 0, (dtheta / 2))
+    ccw_strands[0].data.bevel_object = strand_profile
+
     
+    progress = 0
+    for i in range(1, n_bundles):
+        cw_strands.append(deep_link_object(cw_strands[0], context))
+        cw_strands[-1].rotation_euler = (0, 0, (i * dtheta))
+        ccw_strands.append(deep_link_object(ccw_strands[0], context))
+        ccw_strands[-1].rotation_euler = (0, 0, (i * dtheta) + (dtheta / 2))
+        progress += 1
+        wm.progress_update(progress)
+        
+    cw_strands += ccw_strands
+    strands = [join_objects(cw_strands, context)]
     
+    for i in range(bundle_size):
+        strands.append(deep_link_object(strands[0], context))
+        strands[-1].rotation_euler = (0, 0, strand_dtheta * i)
+        progress += 1
+        wm.progress_update(progress)
+        
+    ret = join_objects(strands, context)
+    ret.name = "Braid"
+
+    ret.active_material = cm.CONDUCTOR_MATERIALS[material]()
+
     wm.progress_end()
     
-    cw = join_objects(cw_bundles, context)
-    ccw = join_objects(ccw_bundles, context)
-    
-    braid = join_objects([cw, ccw], context)
-    braid.name = "Braid"
-    #strand_profile.parent = braid
-    strand_profile.hide = True
-    braid.active_material = cm.CONDUCTOR_MATERIALS[material]()
-    
-    return braid
+    return ret
 
 #################################################################################################
 # The following functions has been lifted from Curve Tools by Zak
@@ -737,6 +785,23 @@ def arclength(obj):
 # End Curve Tools functions
 #################################################################################################
 
+# helical_length
+# Returns the length of a helix
+# radius: Radius of the helix
+# pitch: Number of revolutions per length unit of the helix
+# length: Axial length of the helix
+def helical_length(radius, pitch, length):
+# TODO something wrong here
+    circ = 2.0 * radius * math.pi
+    pl = length / pitch
+
+    rev_length = math.sqrt(circ**2 + pl**2)
+
+    n_revs = length * pitch
+
+    return rev_length * n_revs
+
+
 # make_conductor_array
 # Returns a circular array of conductors
 #
@@ -803,6 +868,7 @@ def make_insulator_array(length, pitch, radius, outer_radius,
         guide_curve.data.use_fill_caps = True
         guide_curve.data.twist_mode = 'Z_UP'
         helix_length = arclength(guide_curve)
+        #helix_length = helical_length(radius, pitch, length)
         guide_curve.data.bevel_factor_start = peel_length * (1/helix_length)
        
         # Solid colored insulator

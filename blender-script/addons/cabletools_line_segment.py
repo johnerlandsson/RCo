@@ -10,6 +10,8 @@ import math
 bpy.types.Scene.CT_line_segment_length = bpy.props.FloatProperty(
         name = "Length",
         description = "Length of line segment in Z-axis",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
         default = 1.5,
         min = 0.1,
         max = 10.0)

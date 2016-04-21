@@ -10,20 +10,26 @@ import cabletools as ct
 bpy.types.Scene.CT_make_insulator_outer_dia = bpy.props.FloatProperty(
         name = "Outer Diameter",
         description = "Total diameter of the insulator",
-        default = 35.0,
-        min = 1.0,
-        max = 300.0)
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.035,
+        min = 0.001,
+        max = 0.3)
 
 bpy.types.Scene.CT_make_insulator_inner_dia = bpy.props.FloatProperty(
         name = "Inner Diameter",
         description = "Total diameter of the insulators hole",
-        default = 30,
-        min = 0.5,
-        max = 250.0)
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.03,
+        min = 0.0005,
+        max = 0.25)
 
 bpy.types.Scene.CT_make_insulator_length = bpy.props.FloatProperty(
-        name = "Length (m)",
+        name = "Length",
         description = "Length of the insulator",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
         default = 0.23,
         min = 0.1,
         max = 10.0)
@@ -44,8 +50,8 @@ class MakeInsulator(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        outer_radius = scene.CT_make_insulator_outer_dia / 2000.0
-        inner_radius = scene.CT_make_insulator_inner_dia / 2000.0
+        outer_radius = scene.CT_make_insulator_outer_dia / 2.0
+        inner_radius = scene.CT_make_insulator_inner_dia / 2.0
         length = scene.CT_make_insulator_length
         material = scene.CT_make_insulator_material
         color_name = scene.CT_make_insulator_color_name

@@ -9,32 +9,40 @@ import cabletools as ct
 # Create properties
 
 bpy.types.Scene.CT_make_braid_diameter = bpy.props.FloatProperty(
-        name = "Diameter (mm)",
+        name = "Diameter",
         description = "Inner diameter of the braid",
-        default = 50,
-        min = 10.0,
-        max = 300.0)
+        default = 0.05,
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        min = 0.01,
+        max = 0.3)
 
 bpy.types.Scene.CT_make_braid_strand_dia = bpy.props.FloatProperty(
-        name = "Strand Diameter (mm)",
+        name = "Strand Diameter",
         description = "Total diameter of the individual strands",
-        default = 0.4,
-        min = 0.05,
-        max = 3.0)
+        default = 0.0004,
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        min = 0.00005,
+        max = 0.003)
 
 bpy.types.Scene.CT_make_braid_length = bpy.props.FloatProperty(
-        name = "Length (m)",
+        name = "Length",
         description = "Length of the braid",
         default = 0.25,
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
         min = 0.2,
         max = 10.0)
 
 bpy.types.Scene.CT_make_braid_pitch = bpy.props.FloatProperty(
         name = "Pitch",
-        description = "Number of revolutions per length unit",
-        default = 8.33,
-        min = 1.0,
-        max = 20.0)
+        description = "Axial length between revolutions",
+        default = 0.12,
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        min = 0.05,
+        max = 0.3)
 
 bpy.types.Scene.CT_make_braid_bundle_size = bpy.props.IntProperty(
         name = "Bundle size",
@@ -65,14 +73,14 @@ class MakeBraid(bpy.types.Operator):
 
         length = scene.CT_make_braid_length
         material = scene.CT_make_braid_material
-        strand_radius = scene.CT_make_braid_strand_dia / 2000.0
-        braid_radius = (scene.CT_make_braid_diameter / 2000.0) + 2.0 * strand_radius
-        strand_pitch = scene.CT_make_braid_pitch
+        strand_radius = scene.CT_make_braid_strand_dia / 2.0
+        braid_radius = (scene.CT_make_braid_diameter / 2.0) + 2.0 * strand_radius
+        strand_pitch = 1 / scene.CT_make_braid_pitch
         bundle_size = scene.CT_make_braid_bundle_size
         n_bundle_pairs = scene.CT_make_braid_n_bundle_pairs
 
-        ct.make_braid(length, braid_radius, strand_pitch,
-                strand_radius, bundle_size, n_bundle_pairs, material, context)
+        ct.make_braid(length, braid_radius, bundle_size, n_bundle_pairs,
+                strand_pitch, strand_radius, material, context)
 
         return {'FINISHED'}
 

@@ -10,12 +10,16 @@ bpy.types.Scene.CT_tube_section_outer_dia = bpy.props.FloatProperty(
         name = "Outer diameter",
         description = "Diameter of outer circle",
         default = 1.5,
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
         min = 0.1,
         max = 100.0)
 
 bpy.types.Scene.CT_tube_section_inner_dia = bpy.props.FloatProperty(
         name = "Inner diameter",
         description = "Diameter of inner circle",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
         default = 1.0,
         min = 0.1,
         max = 100.0)

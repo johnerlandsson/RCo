@@ -8,32 +8,40 @@ import cabletools as ct
 
 # Create properties
 bpy.types.Scene.CT_make_conductor_diameter = bpy.props.FloatProperty(
-        name = "Diameter (mm)",
+        name = "Diameter",
         description = "Total diameter of the conductor",
-        default = 1.62,
-        min = 1.0,
-        max = 300.0)
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.00162,
+        min = 0.0005,
+        max = 0.3)
 
 bpy.types.Scene.CT_make_conductor_strand_dia = bpy.props.FloatProperty(
-        name = "Strand Diameter (mm)",
+        name = "Strand Diameter",
         description = "Total diameter of the individual strands",
-        default = 0.52,
-        min = 0.0,
-        max = 10.0)
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.00052,
+        min = 0.0001,
+        max = 0.01)
 
 bpy.types.Scene.CT_make_conductor_length = bpy.props.FloatProperty(
-        name = "Length (m)",
+        name = "Length",
         description = "Length of the conductor",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
         default = 1.5,
         min = 0.2,
         max = 10.0)
 
 bpy.types.Scene.CT_make_conductor_pitch = bpy.props.FloatProperty(
         name = "Pitch",
-        description = "Number of revolutions per length unit",
-        default = 8.0,
+        description = "Axial length between revolutions",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
+        default = 0.045,
         min = 0.0,
-        max = 20.0)
+        max = 0.05)
 
 bpy.types.Scene.CT_make_conductor_material = bpy.props.EnumProperty(
         items = ct.CONDUCTOR_MATERIALS,
@@ -50,9 +58,9 @@ class MakeConductor(bpy.types.Operator):
 
         length = scene.CT_make_conductor_length
         material = scene.CT_make_conductor_material
-        conductor_radius = scene.CT_make_conductor_diameter / 2000.0
-        strand_radius = scene.CT_make_conductor_strand_dia / 2000.0
-        strand_pitch = scene.CT_make_conductor_pitch
+        conductor_radius = scene.CT_make_conductor_diameter / 2.0
+        strand_radius = scene.CT_make_conductor_strand_dia / 2.0
+        strand_pitch = 1.0 / scene.CT_make_conductor_pitch
 
         ct.make_conductor(length, conductor_radius, strand_radius,
                 strand_pitch, material, context)

@@ -9,6 +9,8 @@ import cabletools as ct
 bpy.types.Scene.CT_bezier_helix_radius = bpy.props.FloatProperty(
         name = "Radius",
         description = "Radius of the helix",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
         default = 1.0,
         min = 0.0001,
         max = 100.0)
@@ -16,6 +18,8 @@ bpy.types.Scene.CT_bezier_helix_radius = bpy.props.FloatProperty(
 bpy.types.Scene.CT_bezier_helix_length = bpy.props.FloatProperty(
         name = "Length",
         description = "Length of the helix in Z-axis",
+        subtype = 'DISTANCE',
+        unit = 'LENGTH',
         default = 1.5,
         min = 0.01,
         max = 1000)
