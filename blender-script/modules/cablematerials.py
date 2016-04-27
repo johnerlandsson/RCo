@@ -15,7 +15,7 @@ def append_nodegroup(folder_path=os.path.dirname(__file__) + "/../../blender-mat
         directory=object_full_directory_path, 
         filename=obj_name, link=False )
 
-def insulator_material(color, blend_value, material_name, material_node_group_name):
+def insulator_material(color, material_name, material_node_group_name):
     #Append material
     append_nodegroup(obj_name = material_node_group_name)
 
@@ -36,28 +36,62 @@ def insulator_material(color, blend_value, material_name, material_node_group_na
     nodegroup = material.node_tree.nodes.new('ShaderNodeGroup')
     nodegroup.node_tree = bpy.data.node_groups[material_node_group_name]
     nodegroup.inputs['Color'].default_value = (color[0], color[1], color[2], 1.0)
-    #nodegroup.inputs['Blend'].default_value = blend_value
+    #nodegroup.inputs['Blend'].default_value = blend_value #old value before nodegroups
 
     # link nodes to material output
     material.node_tree.links.new(material_output.inputs[0], nodegroup.outputs[0])
-    
-
-    #set viewport color
-    material.diffuse_color = color
 
     return material
 
 def pvc_insulator_material(color):
-    return insulator_material(color = color, 
-                              blend_value = 0.15,
+    material = insulator_material(color = color,
                               material_name = 'pvc_insulator_material',
                               material_node_group_name = 'plastic_pvc')
+    
+    #set viewport color
+    material.diffuse_color = color
+    
+    return material
 
 def pe_insulator_material(color):
-    return insulator_material(color = color, 
-                              blend_value = 0.15,
+    material = insulator_material(color = color,
                               material_name = 'pe_insulator_material',
                               material_node_group_name = 'plastic_pe')
+    
+    #set viewport color
+    material.diffuse_color = color
+    
+    return material
+
+def pur_insulator_material(color):
+    material = insulator_material(color = color,
+                              material_name = 'pur_insulator_material',
+                              material_node_group_name = 'plastic_pur')
+    
+    #set viewport color
+    material.diffuse_color = color
+    
+    return material
+
+def epd_insulator_material(color):
+    material = insulator_material(color = color,
+                              material_name = 'epd_insulator_material',
+                              material_node_group_name = 'plastic_epd')
+    
+    #set viewport color
+    material.diffuse_color = color
+    
+    return material
+
+def fill_insulator_material(color):
+    material = insulator_material(color = color,
+                              material_name = 'fill_insulator_material',
+                              material_node_group_name = 'plastic_fill')
+    
+    #set viewport color
+    material.diffuse_color = color
+    
+    return material
 
 def conductor_material(base_color, gloss_color, material_name,
         material_node_group_name):
@@ -112,7 +146,10 @@ def tinned_copper_conductor_material():
 
 
 INSULATOR_MATERIALS = {'pvc': pvc_insulator_material,
-                       'pe': pe_insulator_material}
+                       'pe': pe_insulator_material,
+                       'pur': pur_insulator_material,
+                       'epd': epd_insulator_material,
+                       'fill': fill_insulator_material}
 
 CONDUCTOR_MATERIALS = {'cu': copper_conductor_material,
                        'cu-t': tinned_copper_conductor_material}
@@ -129,6 +166,8 @@ INSULATOR_COLORS = {'red': (0.549, 0.002, 0.009),
                     'grey': (0.173, 0.173, 0.173),
                     'orange': (0.8, 0.136, 0.019),
                     'yellow': (0.532, 0.549, 0.004)}
+
+
 STRIPE_TYPES = {'gr/ye':(INSULATOR_COLORS['green'], INSULATOR_COLORS['yellow'], 0.4, True),
                 'd-black': (INSULATOR_COLORS['white'], INSULATOR_COLORS['black'], 0.5, False),
                 'd-grey': (INSULATOR_COLORS['white'], INSULATOR_COLORS['grey'], 0.5, False),
@@ -138,5 +177,4 @@ STRIPE_TYPES = {'gr/ye':(INSULATOR_COLORS['green'], INSULATOR_COLORS['yellow'], 
                 'd-yellow': (INSULATOR_COLORS['white'], INSULATOR_COLORS['yellow'], 0.5, False),
                 'd-green': (INSULATOR_COLORS['white'], INSULATOR_COLORS['green'], 0.5, False),
                 'd-orange': (INSULATOR_COLORS['white'], INSULATOR_COLORS['orange'], 0.5, False),
-                'd-pink': (INSULATOR_COLORS['white'], INSULATOR_COLORS['pink'], 0.5, False)
-               }
+                'd-pink': (INSULATOR_COLORS['white'], INSULATOR_COLORS['pink'], 0.5, False)}
