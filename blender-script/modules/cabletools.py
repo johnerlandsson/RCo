@@ -1,4 +1,5 @@
 import bpy
+import bmesh
 import math
 import cablematerials as cm
 
@@ -56,18 +57,18 @@ def join_objects(objects, context):
     
     return context.active_object
 
-# make_circle
+# make_bezier_circle
 # Returns a bezier circle
 # radius: Circle radius
 # context: Context in wich to create the circle
-def make_circle(radius, context):
+def make_bezier_circle(radius, context):
     if radius <= 0:
         raise InputError("Invalid radius")
 
     curveData = bpy.data.curves.new('CircleCurve', type = 'CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 1
-    curveData.render_resolution_u = 20
+    curveData.render_resolution_u = 2
     curveData.use_fill_caps = False
 
     polyline = curveData.splines.new('BEZIER')
@@ -154,8 +155,8 @@ def make_tube_section(outer_radius, inner_radius, context):
         raise InputError("Invalid inner radius")
 
     # Create circles
-    outer_circle = make_circle(outer_radius, context)
-    inner_circle = make_circle(inner_radius, context)
+    outer_circle = make_bezier_circle(outer_radius, context)
+    inner_circle = make_bezier_circle(inner_radius, context)
 
     # Join circles
     ret = join_objects([outer_circle, inner_circle], context)
@@ -459,7 +460,7 @@ def strand_positions(conductor_radius, strand_radius):
 # length: Total length of the conductor in Z-axis
 # radius: Radius of the conductor
 def make_solid_conductor(length, radius, context):
-    circle = make_circle(radius, context)
+    circle = make_bezier_circle(radius, context)
     circle.layers = JUNK_LAYER
     
     line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0), context)
@@ -482,7 +483,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
     points = strand_positions(conductor_radius - strand_radius, strand_radius)
 
     #Create a circle to be used as a bevel object
-    circle = make_circle(strand_radius, context)
+    circle = make_bezier_circle(strand_radius, context)
     circle.layers = JUNK_LAYER
 
     #Create progress indicator
@@ -683,7 +684,7 @@ def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
     wm.progress_begin(0, n_bundles + bundle_size)
     
     # Create shared bevel object
-    strand_profile = make_circle(strand_radius, context)
+    strand_profile = make_bezier_circle(strand_radius, context)
 
     # Calculate angles
     dtheta = (2.0 * math.pi) / n_bundles
@@ -739,6 +740,171 @@ def helical_length(radius, pitch, length):
 
     return rev_length * n_revs
 
+def make_mesh_straight_strand(length, radius, mesh_data):
+    ppr = 8
+    n_circles = math.floor(100 * length)
+    dz = length / 10
+    dtheta = (2.0 * math.pi) / ppr
+    
+    for i in range(n_circles + 1):
+        for j in range(ppr):
+            # Create vertecies
+            x = radius * math.sin(j * dtheta)        
+            y = radius * math.cos(j * dtheta)
+            z = dz * i
+            
+            mesh_data.verts.new((x, y, z))
+            mesh_data.verts.ensure_lookup_table()
+            
+            # Create side faces
+            if j > 0 and i > 0:
+                mesh_data.faces.new((mesh_data.verts[-1],
+                                     mesh_data.verts[-ppr - 1],
+                                     mesh_data.verts[-ppr - 2],
+                                     mesh_data.verts[-2]))
+        # Create last side face
+        if i > 0:
+            mesh_data.faces.new((mesh_data.verts[-ppr],
+                                 mesh_data.verts[-1],
+                                 mesh_data.verts[-ppr - 1],
+                                 mesh_data.verts[-(ppr * 2)]))
+        
+        # Create a surface on first and last circle    
+        if i == 0 or i == n_circles:
+            cap_face = []
+            for j in range(ppr):
+                cap_face.append(mesh_data.verts[-j - 1])
+            mesh_data.faces.new(cap_face)
+
+def make_mesh_bunched_strand(length, radius, pitch, strand_radius, mesh_data, start_angle = 0.0):
+    ppr = 8 # Points per revolution
+    cpr = 10 # Circles per revolution
+    n_circles = math.floor(cpr * length * pitch)
+    dtheta_cp = (2.0 * math.pi) / ppr # Angle between circlepoints
+    theta_x = math.atan(((length / pitch) / 2) / radius) # Angle to rotate circle along x-axis
+    dtheta_z = ((2.0 * math.pi) / (pitch * cpr)) * 8# Angle to rotate circle around origin
+    
+    dz = length / n_circles # Z distance between circles
+    
+    for j in range(n_circles + 1):    
+        for i in range(ppr):
+            # Calculate points on circle
+            x = strand_radius * math.sin(i * dtheta_cp) + radius
+            y = strand_radius * math.cos(i * dtheta_cp)
+            z = (dz * j) + (y * math.cos(theta_x))
+            
+            # Rotate circle around origin
+            pr = math.sqrt(x**2 + y**2)
+            ptheta = math.atan(y / x)
+            x = pr * math.sin(j * dtheta_z - ptheta - start_angle)
+            y = pr * math.cos(j * dtheta_z - ptheta - start_angle)
+            
+            # Create vertecies
+            mesh_data.verts.new((x, y, z))
+            mesh_data.verts.ensure_lookup_table()
+            
+            # Create side faces    
+            if j > 0 and i > 0:
+                mesh_data.faces.new((mesh_data.verts[-2],
+                                     mesh_data.verts[-1],
+                                     mesh_data.verts[-ppr - 1],
+                                     mesh_data.verts[-ppr - 2]))
+        
+        # Create final side face
+        if j > 0:
+            mesh_data.faces.new((mesh_data.verts[-ppr],
+                                 mesh_data.verts[-1],
+                                 mesh_data.verts[-ppr - 1],
+                                 mesh_data.verts[-(ppr * 2)]))
+            
+        # Create cap face for first and last circle
+        if j == 0 or j == n_circles:
+            cap_face = []
+            for i in range(ppr):
+                cap_face.append(mesh_data.verts[-(i + 1)])
+            mesh_data.faces.new(cap_face)
+            
+def make_stranded_mesh_conductor(length, radius, pitch, strand_radius):    
+    bm = bmesh.new()
+    obj = bpy.data.objects.new("Conductor", bpy.data.meshes.new("ConductorMesh"))
+    bpy.context.scene.objects.link(obj)
+
+    rc = radius - strand_radius
+    while True:
+        no = math.floor((2.0 * math.pi * rc) / (2.0 * strand_radius))
+        x0 = rc
+        y0 = 0.0
+        x1 = rc * math.cos(2 * math.pi / no)
+        y1 = rc * math.sin(2 * math.pi / no)
+        dist = math.sqrt((x0 - x1)**2 + (y0 - y1)**2)
+        
+        if dist < 2.0 * strand_radius:
+            no -= 1
+            
+        for i in range(no):
+            theta = ((2.0 * math.pi) / no) * i
+            make_mesh_bunched_strand(length, rc, pitch, strand_radius, bm, theta)        
+    
+        rc_next = rc - (2.0 * strand_radius)
+        if rc_next < strand_radius:
+            if rc > 2.0 * strand_radius:
+                make_mesh_straight_strand(length, strand_radius, bm)
+            break
+        else:
+            rc = rc_next
+
+    bm.to_mesh(obj.data)
+    obj.data.update()
+    for f in obj.data.polygons:
+        f.use_smooth = True
+    
+    
+    return obj
+
+def make_solid_mesh_conductor(length, radius):
+     bm = bmesh.new()
+     obj = bpy.data.objects.new("Conductor", bpy.data.meshes.new("ConductorMesh"))
+     bpy.context.scene.objects.link(obj)
+     
+     make_mesh_straight_strand(length, radius, bm)
+     
+     bm.to_mesh(obj.data)
+     obj.data.update()
+     for f in obj.data.polygons:
+         f.use_smooth = True
+     return obj
+
+# make_mesh_conductor
+# Creates a parametric conductor and puts it in the scene
+# length: Total conductor length in Z-axis
+# conductor_radius: Total radius of the combined conductor
+# strand_radius: Diameter of each strand. 0.0 for solid conductor
+# strand_pitch: Number of revolutions per length unit
+def make_mesh_conductor(length, conductor_radius, strand_radius, 
+        strand_pitch, material):
+    # Solid conductor
+    if conductor_radius == strand_radius or about_eq(strand_radius, 0.0):
+        conductor = make_solid_mesh_conductor(length = length, radius = conductor_radius)
+    # Stranded conductor
+    else:
+        conductor = make_stranded_mesh_conductor(length = length, 
+                                   radius = conductor_radius, 
+                                   pitch = strand_pitch, 
+                                   strand_radius = strand_radius)
+
+    # Add modifiers
+    es_mod = conductor.modifiers.new('EdgeSplit', type = "EDGE_SPLIT")
+    es_mod.split_angle = 1.22
+    subsurf_mod = conductor.modifiers.new('SubSurf', type = "SUBSURF")
+    subsurf_mod.levels = 0
+    subsurf_mod.render_levels = 2
+
+    conductor.active_material = cm.CONDUCTOR_MATERIALS[material]()
+
+    bpy.context.scene.objects.active = conductor
+
+    return conductor
+
 # make_conductor_array
 # Returns a circular array of conductors
 #
@@ -762,17 +928,21 @@ def make_conductor_array(length, pitch, radius, conductor_radius,
     guide_curve = make_bezier_helix(length, pitch, radius, clockwize, 1, context)
     
     # Create conductor
-    conductor = make_conductor(helical_length(radius, pitch, length), 
+    conductor = make_mesh_conductor(helical_length(radius, pitch, length), 
                                conductor_radius, 
                                strand_radius,
                                strand_pitch,
-                               material,
-                               context)
+                               material)
+
+    #Apply edge split modifier
+    bpy.ops.object.modifier_apply(apply_as = 'DATA', modifier="EdgeSplit")
+
+    bpy.ops.object.modifier_apply(apply_as = 'DATA', modifier="cond_circ_arr")
     # Create and apply curve modifier
     curve_mod = conductor.modifiers.new('cond_circ_arr', 'CURVE')
     curve_mod.object = guide_curve
     curve_mod.deform_axis = 'POS_Z'
-    bpy.ops.object.modifier_apply(apply_as='DATA', modifier="cond_circ_arr")
+    bpy.ops.object.modifier_apply(apply_as = 'DATA', modifier="cond_circ_arr")
     
     # Don't need the guide curve anymore
     context.scene.objects.unlink(guide_curve)
@@ -865,6 +1035,7 @@ def make_insulator_array(length, pitch, radius, outer_radius,
     
     return ret
 
+
 def make_part_array(length, pitch, radius, clockwize, ins_outer_radius, ins_inner_radius,
                     ins_material, ins_colors, ins_peel_length, cond_radius, cond_strand_pitch,
                     cond_material, cond_strand_radius, context ):
@@ -893,3 +1064,66 @@ def make_part(length, ins_radius, ins_color, ins_material, peel_length, cond_rad
     insulator.name = "Part"
     
     return insulator
+
+import bpy, math
+
+def make_mesh_tube(outer_radius, inner_radius, length, context):
+    if inner_radius >= outer_radius:
+        raise InputError("Inner radius too big")
+    elif outer_radius <= 0.0:
+        raise InputError("Outer radius too small")
+
+    # Calculate points per revolution
+    ppr = math.floor(3.7 * math.log(outer_radius) + 32.0)
+    if ppr <= 0:
+        ppr = 4
+    
+    verts = []
+    faces = []
+
+    dtheta = (2.0 * math.pi) / ppr
+    for i in range(ppr):
+        x = math.sin(i * dtheta)
+        y = math.cos(i * dtheta)
+        
+        verts.append((x * outer_radius, y * outer_radius, 0))
+        verts.append((x * outer_radius, y * outer_radius, length))
+        verts.append((x * inner_radius, y * inner_radius, 0))
+        verts.append((x * inner_radius, y * inner_radius, length))
+       
+        if i == 0:
+            continue
+        
+        offs = i * 4
+        
+        # Create side faces
+        faces.append((offs + 0, offs - 4, offs -3, offs + 1))
+        faces.append((offs + 2, offs - 2, offs -1, offs + 3))
+        
+        # Create end faces
+        faces.append((offs + 0, offs + 2, offs - 2, offs - 4))
+        faces.append((offs + 1, offs + 3, offs - 1, offs - 3))
+        
+    faces.append((0, ppr * 4 - 4, ppr * 4 - 3, 1))
+    faces.append((2, ppr * 4 - 2, ppr * 4 - 1, 3))
+    faces.append((0, 2, ppr * 4 - 2, ppr * 4 - 4))
+    faces.append((1, 3, ppr * 4 - 1, ppr * 4 - 3))
+     
+    mesh = bpy.data.meshes.new("Tube")
+    obj = bpy.data.objects.new("Tube", mesh)
+    context.scene.objects.link(obj)
+    mesh.from_pydata(verts, [], faces)
+
+    mesh.update(calc_edges = True)
+    mesh.calc_normals()
+
+    # Set smooth shading
+    for p in mesh.polygons:
+        p.use_smooth = True
+
+    # Add modifiers
+    obj.modifiers.new('EdgeSplit', type = "EDGE_SPLIT")
+    subsurf_mod = obj.modifiers.new('SubSurf', type = "SUBSURF")
+    subsurf_mod.levels = 2
+    subsurf_mod.render_levels = 5
+
