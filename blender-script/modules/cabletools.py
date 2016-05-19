@@ -736,13 +736,8 @@ def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
 # pitch: Number of revolutions per length unit of the helix
 # length: Axial length of the helix
 def helical_length(radius, pitch, length):
-    circ = 2.0 * radius * math.pi
-
-    rev_length = math.sqrt(circ**2 + length**2)
-
-    n_revs = length * pitch
-
-    return rev_length * n_revs
+    circ = 2.0 * radius * math.pi * length * pitch
+    return math.sqrt(circ**2 + length**2)
 
 # make_mesh_straight_strand
 # Adds a cylindrical feature to existing mesh
