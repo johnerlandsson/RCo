@@ -15,6 +15,13 @@ def append_nodegroup(folder_path=os.path.dirname(__file__) + "/../../blender-mat
         directory=object_full_directory_path, 
         filename=obj_name, link=False )
 
+# insulator_material
+# General function to append an insulator material. Should not be called
+# directly. Use convenience functions.
+#
+# color: Material color
+# material_name: Name of material to append
+# material_node_group_name: Name of node group containing the material
 def insulator_material(color, material_name, material_node_group_name):
     #Append material
     append_nodegroup(obj_name = material_node_group_name)

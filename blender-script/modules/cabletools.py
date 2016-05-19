@@ -25,6 +25,10 @@ class InputError(Exception):
     def __init__(self, msg):
         super(CableToolsInputError, self).__init__(msg)
 
+class Error(Exception):
+    def __init__(self, msg):
+        super(CableToolsError, self).__init__(msg)
+
 # deep_link_objects
 # Returns a copy of the passed object. Data is linked
 # object: Object to copy
