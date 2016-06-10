@@ -83,8 +83,8 @@ def make_bezier_circle(radius, context):
     handle_length = (4.0/3.0) * math.tan(math.pi / (2.0 * ((2.0 * math.pi) / dtheta))) * radius
     
     for i in range(4):
-        polyline.bezier_points[i].co[0] = radius * math.cos(dtheta * i) #X
-        polyline.bezier_points[i].co[1] = radius * math.sin(dtheta * i) #Y
+        polyline.bezier_points[i].co[0] = radius * math.cos(-dtheta * i) #X
+        polyline.bezier_points[i].co[1] = radius * math.sin(-dtheta * i) #Y
         
         hh = math.sqrt(radius**2 + handle_length**2)
         htheta = math.acos(radius / hh)
@@ -667,7 +667,6 @@ def make_braid_strand(length, radius, pitch, points_per_rev, strand_radius, cloc
     
     return ret
 
- make_braid
 # Creates a pleated tube object
 #
 # length: Axial length of braid
