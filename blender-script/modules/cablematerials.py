@@ -22,7 +22,8 @@ def append_nodegroup(folder_path=os.path.dirname(__file__) + "/../../blender-mat
 # color: Material color
 # material_name: Name of material to append
 # material_node_group_name: Name of node group containing the material
-def insulator_material(color, material_name, material_node_group_name):
+# object_radius: Radius of object for texture scale
+def insulator_material(color, material_name, material_node_group_name, object_radius):
     #Append material
     append_nodegroup(obj_name = material_node_group_name)
 
@@ -44,6 +45,8 @@ def insulator_material(color, material_name, material_node_group_name):
     nodegroup.node_tree = bpy.data.node_groups[material_node_group_name]
     nodegroup.inputs['Color'].default_value = (color[0], color[1], color[2], 1.0)
     #nodegroup.inputs['Blend'].default_value = blend_value #old value before nodegroups
+    if 'object_radius' in nodegroup.inputs:
+        nodegroup.inputs['object_radius'].default_value = object_radius
 
     # link nodes to material output
     material.node_tree.links.new(material_output.inputs[0], nodegroup.outputs[0])
@@ -51,10 +54,11 @@ def insulator_material(color, material_name, material_node_group_name):
     return material
 
 
-def pvc_insulator_material(color):
+def pvc_insulator_material(color, object_radius=0.001):
     material = insulator_material(color = color,
                               material_name = 'pvc_insulator_material',
-                              material_node_group_name = 'plastic_pvc')
+                              material_node_group_name = 'plastic_pvc',
+                              object_radius=object_radius)
     
     #set viewport color
     material.diffuse_color = color
@@ -62,10 +66,11 @@ def pvc_insulator_material(color):
     return material
 
 
-def pe_insulator_material(color):
+def pe_insulator_material(color, object_radius=0.001):
     material = insulator_material(color = color,
                               material_name = 'pe_insulator_material',
-                              material_node_group_name = 'plastic_pe')
+                              material_node_group_name = 'plastic_pe',
+                              object_radius=object_radius)
     
     #set viewport color
     material.diffuse_color = color
@@ -73,10 +78,11 @@ def pe_insulator_material(color):
     return material
 
 
-def pur_insulator_material(color):
+def pur_insulator_material(color, object_radius=0.001):
     material = insulator_material(color = color,
                               material_name = 'pur_insulator_material',
-                              material_node_group_name = 'plastic_pur')
+                              material_node_group_name = 'plastic_pur',
+                              object_radius=object_radius)
     
     #set viewport color
     material.diffuse_color = color
@@ -84,10 +90,11 @@ def pur_insulator_material(color):
     return material
 
 
-def epd_insulator_material(color):
+def epd_insulator_material(color, object_radius=0.001):
     material = insulator_material(color = color,
                               material_name = 'epd_insulator_material',
-                              material_node_group_name = 'plastic_epd')
+                              material_node_group_name = 'plastic_epd',
+                              object_radius=object_radius)
     
     #set viewport color
     material.diffuse_color = color
@@ -95,10 +102,22 @@ def epd_insulator_material(color):
     return material
 
 
-def fill_insulator_material(color):
+def fill_insulator_material(color, object_radius=0.001):
     material = insulator_material(color = color,
                               material_name = 'fill_insulator_material',
-                              material_node_group_name = 'plastic_fill')
+                              material_node_group_name = 'plastic_fill',
+                              object_radius=object_radius)
+    
+    #set viewport color
+    material.diffuse_color = color
+    
+    return material
+
+def fill_rope_material(color, object_radius=0.001):
+    material = insulator_material(color = color,
+                              material_name = 'fill_rope_material',
+                              material_node_group_name = 'plastic_fill_rope',
+                              object_radius = object_radius)
     
     #set viewport color
     material.diffuse_color = color
@@ -159,7 +178,7 @@ def iron_conductor_material():
     return material 
 
 
-def lap_material(material_name, material_node_group_name):
+def lap_material(material_name, material_node_group_name, object_radius):
     #Append material
     append_nodegroup(obj_name = material_node_group_name)
 
@@ -179,24 +198,27 @@ def lap_material(material_name, material_node_group_name):
     #add nodes
     nodegroup = material.node_tree.nodes.new('ShaderNodeGroup')
     nodegroup.node_tree = bpy.data.node_groups[material_node_group_name]
+    #nodegroup.inputs['Blend'].default_value = blend_value #old value before nodegroups    
+    if 'object_radius' in nodegroup.inputs:
+        nodegroup.inputs['object_radius'].default_value = object_radius
     
     # link nodes to material output
     material.node_tree.links.new(material_output.inputs[0], nodegroup.outputs[0])
     
     return material
 
-def nylon_lap_material():
-    material = conductor_material('lap_nylon', 'lap_nylon')
+def nylon_lap_material(object_radius=0.001):
+    material = lap_material('lap_nylon', 'lap_nylon', object_radius=object_radius)
     material.diffuse_color = LAP_COLORS['nylon']
     return material   
 
-def chrome_lap_material():
-    material = conductor_material('lap_chrome', 'lap_chrome-2-sided')
+def chrome_lap_material(object_radius=0.001):
+    material = lap_material('lap_chrome', 'lap_chrome-2-sided', object_radius=object_radius)
     material.diffuse_color = LAP_COLORS['chrome']
     return material
 
-def plastic_lap_material():
-    material = conductor_material('lap_plastic', 'lap_plastic')
+def plastic_lap_material(object_radius=0.001):
+    material = lap_material('lap_plastic', 'lap_plastic', object_radius=object_radius)
     material.diffuse_color = LAP_COLORS['plastic']
     return material
 
@@ -204,7 +226,8 @@ INSULATOR_MATERIALS = {'pvc': pvc_insulator_material,
                        'pe': pe_insulator_material,
                        'pur': pur_insulator_material,
                        'epd': epd_insulator_material,
-                       'fill': fill_insulator_material}
+                       'fill': fill_insulator_material,
+                       'fill_rope': fill_rope_material}
 
 CONDUCTOR_MATERIALS = {'cu': copper_conductor_material,
                        'cu-t': tinned_copper_conductor_material,
@@ -212,8 +235,8 @@ CONDUCTOR_MATERIALS = {'cu': copper_conductor_material,
                        'fe': iron_conductor_material}
 
 LAP_MATERIALS = {'nylon': nylon_lap_material,
-                 'chrome': nylon_lap_material,
-                 'plastic': nylon_lap_material}                       
+                 'chrome': chrome_lap_material,
+                 'plastic': plastic_lap_material}                  
 
 INSULATOR_COLORS = {'red': (0.549, 0.002, 0.009),
                     'green': (0.013, 0.549, 0.025),
