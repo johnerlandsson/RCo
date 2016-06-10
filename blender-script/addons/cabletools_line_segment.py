@@ -22,10 +22,10 @@ class LineSegment(bpy.types.Operator):
     bl_options = {'REGISTER'}
 
     def execute(self, context):
-        scene = context.scene
-        length = scene.CT_line_segment_length
+        length = context.scene.CT_line_segment_length
 
-        ct.make_line((0, 0, 0), (0, 0, length), math.floor(length * 10.0), scene)
+        ct.make_line((0, 0, 0), (0, 0, length), math.floor(length * 10.0),
+                context)
 
         return {'FINISHED'}
 

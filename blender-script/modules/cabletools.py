@@ -8,9 +8,9 @@ CONDUCTOR_MATERIALS = [('cu', 'CU', 'Standard copper'),
                        ('al', 'AL', 'Aluminium')]
 INSULATOR_MATERIALS = [('pvc', 'PVC', 'PVC'), 
                        ('pe', 'PE', 'Polyethelene'), 
-                       ('pex', 'PEX', 'Cross linked polyethelene')]
+                       ('pex', 'PEX', 'Cross linked polyethylene')]
 LAP_MATERIALS = [('cu', 'CU', 'Standard copper'), 
-                 ('nylon', 'Nylon', 'Nylon filt lap')]
+                 ('nylon', 'Nylon', 'Nylon felt lap')]
 
 INSULATOR_COLORS = []
 for k in cm.INSULATOR_COLORS:
@@ -32,7 +32,7 @@ class Error(Exception):
 # deep_link_objects
 # Returns a copy of the passed object. Data is linked
 # object: Object to copy
-# context: context in wich to create the copy
+# context: context in which to create the copy
 def deep_link_object(obj, context, with_children = False):
     ret = bpy.data.objects.new(obj.name, obj.data)
     context.scene.objects.link(ret)
@@ -46,7 +46,7 @@ def deep_link_object(obj, context, with_children = False):
     return ret
 
 # join_objects
-# Conveniencefunction to join a list of objects
+# Convenience function to join a list of objects
 # objects: List of objects to join
 # context: Context containing the objects
 def join_objects(objects, context):
@@ -64,7 +64,7 @@ def join_objects(objects, context):
 # make_bezier_circle
 # Returns a bezier circle
 # radius: Circle radius
-# context: Context in wich to create the circle
+# context: Context in which to create the circle
 def make_bezier_circle(radius, context):
     if radius <= 0:
         raise InputError("Invalid radius")
@@ -72,7 +72,7 @@ def make_bezier_circle(radius, context):
     curveData = bpy.data.curves.new('CircleCurve', type = 'CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 1
-    curveData.render_resolution_u = 2
+    curveData.render_resolution_u = 7
     curveData.use_fill_caps = False
 
     polyline = curveData.splines.new('BEZIER')
@@ -103,7 +103,7 @@ def make_bezier_circle(radius, context):
 # Returns a line segment
 # p1: First point of line segment
 # p2: Second point of line segment
-# scene: Scene in wich to add the line segment
+# scene: Scene in which to add the line segment
 def make_line(p1, p2, n_subdiv, context):
     if n_subdiv <= 0:
         raise InputError("No subdivisions set")
@@ -151,7 +151,7 @@ def make_line(p1, p2, n_subdiv, context):
 # Creates two joined circles
 # outer_radius: Radius of the outer circle
 # inner_radius: Radius of the inner circle
-# context: Context in wich to create it
+# context: Context in which to create it
 def make_tube_section(outer_radius, inner_radius, context):
     if outer_radius <= 0.0:
         raise InputError("Invalid outer radius")
@@ -173,7 +173,7 @@ def make_tube_section(outer_radius, inner_radius, context):
 # Creates part of a tube section. To be used for striped insulators
 # outer_radius: Radius of the outer circle
 # inner_radius: Radius of the inner circle
-# amount: Amount of circomference to be used (0-1)
+# amount: Amount of circumference to be used (0-1)
 # mirror: Mirror the slice in X and Y directions
 def make_tube_section_slice(outer_radius, inner_radius, amount, mirror, context):
     curveData = bpy.data.curves.new('StripedTubeSection', type = 'CURVE')
@@ -245,7 +245,7 @@ def make_tube_section_slice(outer_radius, inner_radius, amount, mirror, context)
     
     return ret
 
-# TODO replace this with som matrix operation
+# TODO replace this with some matrix operation
 def rotate_point_xy(p, angle):
     r = math.sqrt(p[0]**2 + p[1]**2)
     theta = math.atan(p[1] / p[0])
@@ -258,9 +258,9 @@ def rotate_point_xy(p, angle):
 # 
 # outer_radius: Radius of outer circle
 # inner_radius: Radius of inner circle
-# amount: Percentage of circomference to be striped
+# amount: Percentage of circumference to be striped
 # double_sided: Split stripe into two slices
-# context: Context in wich to create the curve
+# context: Context in which to create the curve
 def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided, context):
     if amount > 0.51 or amount < 0.1:
         raise InputError("Please select an amount between 0.1 and 0.51")
@@ -311,7 +311,7 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
     line.data.twist_mode = 'Z_UP'
     context.scene.objects.active = line
 
-    # Solid color insulator
+    # Solid colour insulator
     if color_name in cm.INSULATOR_COLORS.keys():         
         base_color = cm.INSULATOR_COLORS[color_name]
         profile = make_tube_section(outer_radius, inner_radius, context) 
@@ -339,7 +339,7 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         stripe_line.active_material = cm.INSULATOR_MATERIALS[material](stripe_color)
         stripe_line.parent = line
     else:
-        raise InputError("\"%s\" is not a valid color:" %color_name)
+        raise InputError("\"%s\" is not a valid colour:" %color_name)
 
     return line
 
@@ -498,14 +498,14 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
     strands = []
     orig_obj = None
     
-    # iterate over the points and calculate positions of conductor helixes
+    # iterate over the points and calculate positions of conductor helices
     for row in points:
         r = math.sqrt(row[0][0]**2 + row[0][1]**2)
         dtheta = (2.0 * math.pi) / len(row)
         theta = 0.0
 
         for i in range(len(row)):
-            # Use make_solid_conductor for centered strand
+            # Use make_solid_conductor for centred strand
             if about_eq(r, 0.0):
                 strands.append( make_solid_conductor(length, strand_radius,
                     context))
@@ -559,7 +559,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 # conductor_radius: Total radius of the combined conductor
 # strand_radius: Diameter of each strand. 0.0 for solid conductor
 # strand_pitch: Number of revolutions per length unit
-# context: Context in wich to create the conductor object
+# context: Context in which to create the conductor object
 def make_conductor(length, conductor_radius, strand_radius, 
         strand_pitch, material, context):
     # Solid conductor
@@ -579,7 +579,7 @@ def make_conductor(length, conductor_radius, strand_radius,
     return conductor
 
 # make_braid_strand
-# Creates a helical strand with alternating radi to be used with make_braid
+# Creates a helical strand with alternating radii to be used with make_braid
 # function.
 #
 # length: Axial length of helix
@@ -587,8 +587,8 @@ def make_conductor(length, conductor_radius, strand_radius,
 # pitch: Number of revolutions per length unit in helix
 # points_per_rev: Number of points on helix for each revolution
 # strand_radius: Radius of the strand
-# clockwize: Rotation direction of helix
-# context: Context in wich to create the strand
+# clockwise: Rotation direction of helix
+# context: Context in which to create the strand
 def make_braid_strand(length, radius, pitch, points_per_rev, strand_radius, clockwize, context):
     # Calculate angle between each point
     dtheta = (2.0 * math.pi) / points_per_rev
@@ -667,17 +667,17 @@ def make_braid_strand(length, radius, pitch, points_per_rev, strand_radius, cloc
     
     return ret
 
-# make_braid
+ make_braid
 # Creates a pleated tube object
 #
 # length: Axial length of braid
 # radius: Radius of strand positions
 # bundle_size: Number of strands in each bundle
-# n_bundle_pairs: Number of spinacles going in each direction
+# n_bundle_pairs: Number of spinaches going in each direction
 # pitch: Number of revolutions per length unit
 # strand_radius: Radius of each individual strand
 # material: String describing the conductor material
-# context: Context in wich to create the braid
+# context: Context in which to create the braid
 def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
         strand_radius, material, context):
     # Calculate total number of bundles
@@ -694,10 +694,10 @@ def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
     dtheta = (2.0 * math.pi) / n_bundles
     strand_dtheta = (2.0 * math.pi) / ((radius * math.pi) / strand_radius)
         
-    # Create clockwize strand
+    # Create clockwise strand
     cw_strands = [make_braid_strand(length, radius, pitch, n_bundles * 4, strand_radius, True, context)]
     cw_strands[0].data.bevel_object = strand_profile
-    # Create counter-clockwize strand
+    # Create counter-clockwise strand
     ccw_strands = [make_braid_strand(length, radius, pitch, n_bundles * 4, strand_radius, False, context)]
     ccw_strands[0].rotation_euler = (0, 0, (dtheta / 2))
     ccw_strands[0].data.bevel_object = strand_profile
@@ -753,7 +753,7 @@ def make_mesh_straight_strand(length, radius, mesh_data):
     
     for i in range(n_circles + 1):
         for j in range(ppr):
-            # Create vertecies
+            # Create vertices
             x = radius * math.sin(j * dtheta)        
             y = radius * math.cos(j * dtheta)
             z = dz * i
@@ -788,13 +788,13 @@ def make_mesh_straight_strand(length, radius, mesh_data):
 # radius: Radius of strand position
 # pitch: Revolutions per length unit
 # strand_radius: Radius of the strand
-# mesh_data: Bmesh object in wich to create the strand
+# mesh_data: Bmesh object in which to create the strand
 # start_angle: Angle of strand position
 def make_mesh_bunched_strand(length, radius, pitch, strand_radius, mesh_data, start_angle = 0.0):
     ppr = 8 # Points per revolution
     cpr = 10 # Circles per revolution
     n_circles = math.floor(cpr * length * pitch)
-    dtheta_cp = (2.0 * math.pi) / ppr # Angle between circlepoints
+    dtheta_cp = (2.0 * math.pi) / ppr # Angle between circle points
     theta_x = math.atan(((length / pitch) / 2) / radius) # Angle to rotate circle along x-axis
     dtheta_z = ((2.0 * math.pi) / (pitch * cpr)) * 8# Angle to rotate circle around origin
     
@@ -813,7 +813,7 @@ def make_mesh_bunched_strand(length, radius, pitch, strand_radius, mesh_data, st
             x = pr * math.sin(j * dtheta_z - ptheta - start_angle)
             y = pr * math.cos(j * dtheta_z - ptheta - start_angle)
             
-            # Create vertecies
+            # Create vertices
             mesh_data.verts.new((x, y, z))
             mesh_data.verts.ensure_lookup_table()
             
@@ -945,9 +945,9 @@ def make_mesh_conductor(length, conductor_radius, strand_radius,
 # strand_pitch: Pitch of the individual strands in each conductor
 # material: String describing the conductor material
 # strand_radius: Radius of individual strands
-# clockwize: Direction of array rotation
+# clockwise: Direction of array rotation
 # n_conductors: Number of conductors in array
-# context: Context in wich to create the array
+# context: Context in which to create the array
 def make_conductor_array(length, pitch, radius, conductor_radius, 
                          strand_pitch, material, strand_radius, 
                          clockwize, n_conductors, context):
@@ -974,7 +974,7 @@ def make_conductor_array(length, pitch, radius, conductor_radius,
     curve_mod.deform_axis = 'POS_Z'
     bpy.ops.object.modifier_apply(apply_as = 'DATA', modifier="cond_circ_arr")
     
-    # Don't need the guide curve anymore
+    # Don't need the guide curve any more
     context.scene.objects.unlink(guide_curve)
 
     conductors = [conductor]
@@ -995,15 +995,15 @@ def make_conductor_array(length, pitch, radius, conductor_radius,
 # Creates a circular array of insulators
 #
 # length: Axial length of the array
-# pitch: Number of revoutions per length unit
+# pitch: Number of revolutions per length unit
 # radius: Radius of the array
 # outer_radius: Outer radius of individual insulators
 # inner_radius: Inner radius of individual insulators
 # material: String representing the name of insulator material
-# colors: Whitespace separated string of color names
-# clockwize: Rotation direction of array helix
+# colours: White space separated string of colour names
+# clockwise: Rotation direction of array helix
 # peel_length: How much of the insulator end to be removed
-# context: Context in wich to create the array
+# context: Context in which to create the array
 def make_insulator_array(length, pitch, radius, outer_radius, 
                         inner_radius, material, colors, clockwize, 
                         peel_length, context):
@@ -1020,7 +1020,7 @@ def make_insulator_array(length, pitch, radius, outer_radius,
         helix_length = helical_length(radius, pitch, length)
         guide_curve.data.bevel_factor_start = peel_length * (1/helix_length)
        
-        # Solid colored insulator
+        # Solid coloured insulator
         if color_name in cm.INSULATOR_COLORS.keys():
             base_profile = make_tube_section(outer_radius, inner_radius, context)
             base_profile.layers = JUNK_LAYER
@@ -1038,7 +1038,7 @@ def make_insulator_array(length, pitch, radius, outer_radius,
             
             base_profile, stripe_profile = make_striped_tube_section(inner_radius, outer_radius, amount, double_sided, context)
 
-            # Make a copy of the guidecurve for our stripe
+            # Make a copy of the guide curve for our stripe
             stripe_curve = bpy.data.objects.new('StripeCurve', guide_curve.data.copy())
             context.scene.objects.link(stripe_curve)
             stripe_curve.parent = guide_curve
@@ -1051,7 +1051,7 @@ def make_insulator_array(length, pitch, radius, outer_radius,
             stripe_curve.data.bevel_object = stripe_profile
             stripe_curve.active_material = cm.INSULATOR_MATERIALS[material](stripe_color)
         else:
-            raise InputError("\"%s\" is not a valid color name" %color)
+            raise InputError("\"%s\" is not a valid colour name" %color)
             
         guide_curve.rotation_euler = (0, 0, theta)
         theta += dtheta
@@ -1072,17 +1072,17 @@ def make_insulator_array(length, pitch, radius, outer_radius,
 # length: Axial length of the array
 # pitch: Array pitch
 # radius: Array radius
-# clockwize: Rotation direction of the array
+# clockwise: Rotation direction of the array
 # ins_outer_radius: Outer radius of the insulator
 # ins_inner_radius: Inner radius of the insulator
 # ins_material: String representing material of the insulator
-# ins_colors: A string of colors describing the insulator colors. Whitespace separated
+# ins_colours: A string of colours describing the insulator colours. White space separated
 # ins_peel_length: How much of the insulator is pulled back to reveal conductor
 # cond_radius: Radius of conductor
 # cond_strand_pitch: How many revolutions per length unit are the strands twisted
 # cond_material: String representing material of the conductor
 # cond_strand_radius: Radius of the individual conductor strands
-# context: Context in wich to create the array
+# context: Context in which to create the array
 def make_part_array(length, pitch, radius, clockwize, ins_outer_radius, ins_inner_radius,
                     ins_material, ins_colors, ins_peel_length, cond_radius, cond_strand_pitch,
                     cond_material, cond_strand_radius, context ):
@@ -1106,14 +1106,14 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius, ins_inne
 #
 # length: Length of the part in Z-axis
 # ins_radius: Outer radius of the insulator
-# ins_color: String representing the insulator color
+# ins_colour: String representing the insulator colour
 # ins_material: String representing the insulator material
 # peel_length: How much of the insulator to be pulled back to reveal conductor
 # cond_radius: Conductor radius
 # cond_material: Material of conductor
 # strand_radius: Radius of individual strands
 # strand_pitch: Revolutions per length unit in strand twisting
-# context: Context in wich to create the part
+# context: Context in which to create the part
 def make_part(length, ins_radius, ins_color, ins_material, peel_length, cond_radius, 
               cond_material, strand_radius, strand_pitch, context):
     insulator = make_insulator(cond_radius, ins_radius, length, peel_length, 
@@ -1131,7 +1131,7 @@ def make_part(length, ins_radius, ins_color, ins_material, peel_length, cond_rad
 # outer_radius: Outer radius of tube
 # inner_radius: Inner radius of tube
 # length: Length of the tube in Z-axis
-# context: Context in wich to create the tube
+# context: Context in which to create the tube
 def make_mesh_tube(outer_radius, inner_radius, length, context):
     if inner_radius >= outer_radius:
         raise InputError("Inner radius too big")
@@ -1186,9 +1186,9 @@ def make_mesh_tube(outer_radius, inner_radius, length, context):
     for p in mesh.polygons:
         p.use_smooth = True
 
+
     # Add modifiers
     obj.modifiers.new('EdgeSplit', type = "EDGE_SPLIT")
     subsurf_mod = obj.modifiers.new('SubSurf', type = "SUBSURF")
     subsurf_mod.levels = 1
     subsurf_mod.render_levels = 2
-
