@@ -1,0 +1,8 @@
+let @a=":redir! > /tmp/bpy_external.io | echo expand('%:p') | redir END  "
+nnoremap <F5> @a
+
+let @b = "python sys.path.append('/home/john/src/blender-2.77-linux-glibc211-x86_64/2.77/scripts/modules')"
+nnoremap <F6> @b
+
+let @q = "bi@param f:xj^lll"
+nnoremap <F4> @q
