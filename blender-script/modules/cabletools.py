@@ -1,7 +1,10 @@
-import bpy
+## @package cabletools
+# This package contains functions to create cable related objects in blender. 
+
 import bmesh
-import math
+import bpy
 import cablematerials as cm
+import math
 
 CONDUCTOR_MATERIALS = [('cu', 'CU', 'Standard copper'), 
                        ('cu-t', 'CU-Tinned', 'Tinned copper'), 
@@ -23,16 +26,18 @@ JUNK_LAYER = (False, False, False, False, False, False, False, False, False, Fal
 
 class InputError(Exception):
     def __init__(self, msg):
-        super(CableToolsInputError, self).__init__(msg)
+        super(InputError, self).__init__(msg)
 
 class Error(Exception):
     def __init__(self, msg):
-        super(CableToolsError, self).__init__(msg)
+        super(Error, self).__init__(msg)
 
-# deep_link_objects
-# Returns a copy of the passed object. Data is linked
-# object: Object to copy
-# context: context in which to create the copy
+## Create a deep linked copy of an object 
+# @param obj Object to copy
+# @param context context in which to create the copy
+# @param with_children Also create copies of objects children
+#
+# @return A deep linked copy of the passed object
 def deep_link_object(obj, context, with_children = False):
     ret = bpy.data.objects.new(obj.name, obj.data)
     context.scene.objects.link(ret)
@@ -45,10 +50,10 @@ def deep_link_object(obj, context, with_children = False):
 
     return ret
 
-# join_objects
-# Convenience function to join a list of objects
-# objects: List of objects to join
-# context: Context containing the objects
+## Convenience function to join a list of objects
+# @param objects List of objects to join
+# @param context Context containing the objects
+# @return The new object
 def join_objects(objects, context):
     if len(objects) < 2:
         return
@@ -61,10 +66,10 @@ def join_objects(objects, context):
     
     return context.active_object
 
-# make_bezier_circle
-# Returns a bezier circle
-# radius: Circle radius
-# context: Context in which to create the circle
+## Creates a circle object using bezier curve
+# @param radius Circle radius
+# @param context Context in which to create the circle
+# @return The circle object
 def make_bezier_circle(radius, context):
     if radius <= 0:
         raise InputError("Invalid radius")
@@ -99,11 +104,11 @@ def make_bezier_circle(radius, context):
     
     return ret
 
-# make_line
-# Returns a line segment
-# p1: First point of line segment
-# p2: Second point of line segment
-# scene: Scene in which to add the line segment
+## Creates a line object
+# @param p1 First point of line segment
+# @param p2 Second point of line segment
+# @param scene Scene in which to add the line segment
+# @return The line object
 def make_line(p1, p2, n_subdiv, context):
     if n_subdiv <= 0:
         raise InputError("No subdivisions set")
@@ -147,11 +152,11 @@ def make_line(p1, p2, n_subdiv, context):
     
     return objectData
 
-# make_tube_section
-# Creates two joined circles
-# outer_radius: Radius of the outer circle
-# inner_radius: Radius of the inner circle
-# context: Context in which to create it
+## Creates two joined circles
+# @param outer_radius Radius of the outer circle
+# @param inner_radius Radius of the inner circle
+# @param context Context in which to create it
+# @return The new object
 def make_tube_section(outer_radius, inner_radius, context):
     if outer_radius <= 0.0:
         raise InputError("Invalid outer radius")
@@ -168,13 +173,12 @@ def make_tube_section(outer_radius, inner_radius, context):
 
     return ret
 
-
-# make_tube_section_slice
-# Creates part of a tube section. To be used for striped insulators
-# outer_radius: Radius of the outer circle
-# inner_radius: Radius of the inner circle
-# amount: Amount of circumference to be used (0-1)
-# mirror: Mirror the slice in X and Y directions
+## Creates part of a tube section. To be used for striped insulators
+# @param outer_radius Radius of the outer circle
+# @param inner_radius Radius of the inner circle
+# @param amount Amount of circumference to be used (0-1)
+# @param mirror Mirror the slice in X and Y directions
+# @return The new object
 def make_tube_section_slice(outer_radius, inner_radius, amount, mirror, context):
     curveData = bpy.data.curves.new('StripedTubeSection', type = 'CURVE')
     curveData.dimensions = '3D'
@@ -252,15 +256,14 @@ def rotate_point_xy(p, angle):
     p[0] = r * math.sin(theta + angle)
     p[1] = r * math.cos(theta + angle)
 
-# make_striped_tube_section
-# Creates two curve objects representing the cross section of a striped
+## Creates two curve objects representing the cross section of a striped
 # insulator.
-# 
-# outer_radius: Radius of outer circle
-# inner_radius: Radius of inner circle
-# amount: Percentage of circumference to be striped
-# double_sided: Split stripe into two slices
-# context: Context in which to create the curve
+# @param outer_radius Radius of outer circle
+# @param inner_radius Radius of inner circle
+# @param amount Percentage of circumference to be striped
+# @param double_sided Split stripe into two slices
+# @param context Context in which to create the curve
+# @return The two parts of the tube section
 def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided, context):
     if amount > 0.51 or amount < 0.1:
         raise InputError("Please select an amount between 0.1 and 0.51")
@@ -269,7 +272,8 @@ def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided, 
 
     if double_sided:
         first = make_tube_section_slice(outer_radius, inner_radius, (1.0 - amount) / 2.0, False, context)
-        second = make_tube_section_slice(outer_radius, inner_radius, (1.0 - amount) / 2.0, True, context)
+        second = make_tube_section_slice(outer_radius, inner_radius, (1.0 -
+            amount) / 2.0, True, context)The two parts of the tube section
         base = join_objects([first, second], context)
         
         first = make_tube_section_slice(outer_radius, inner_radius, amount / 2.0, False, context)
@@ -295,12 +299,12 @@ def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided, 
         
     return base, stripe
 
-# make_insulator
-# Creates a tube representing the insulator
-# inner_radius: The inner radius of plastic tube
-# outer_radius: The outer radius of plastic tube
-# length: Length of the part/cable in Z-axis
-# peel_length: How much of the conductor that is visible        
+## Creates a tube representing the insulator
+# @param inner_radius The inner radius of plastic tube
+# @param outer_radius The outer radius of plastic tube
+# @param length Length of the part/cable in Z-axis
+# @param peel_length How much of the conductor that is visible        
+# @return The new object
 def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         color_name, context):
     # Create guide curve
@@ -343,19 +347,22 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
 
     return line
 
-# about_eq
-# Helper function to compare floating point values
+# TODO Find standard function for this
+## Helper function to compare floating point values
+# @param a A float variable
+# @param b A float variable to compare with
+# @return True if a and b are equal
 def about_eq(a, b):
     if a + 0.000001 > b and a - 0.000001 < b:
         return True
     return False
 
-# make_bezier_helix
-# Returns a bezier curve in the shape of a spiral
-# length: Total length in Z-axis
-# pitch: Number of revolutions per length unit
-# radius: Radius of helix
-# context: context in wich to create the helix
+## Returns a bezier curve in the shape of a spiral
+# @param length Total length in Z-axis
+# @param pitch Number of revolutions per length unit
+# @param radius Radius of helix
+# @param context context in wich to create the helix
+# @return The new object
 def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context):
     #Calculate limits
     if about_eq(pitch, 0.0):
@@ -418,12 +425,10 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions, context)
     return ret
 
 
-# strand_positions
-# Circle packing algorithm
-#
-# conductor_radius: Radius of the larger circle
-# strand_radius: Radius of the smaller circle
-# Returns: A list of tuples representing the points
+## Circle packing algorithm
+# @param conductor_radius Radius of the larger circle
+# @param strand_radius Radius of the smaller circle
+# @return A list of tuples representing the points
 def strand_positions(conductor_radius, strand_radius):
     rc = conductor_radius
     rs = strand_radius
@@ -459,10 +464,10 @@ def strand_positions(conductor_radius, strand_radius):
     return ret
 
 
-# make_solid_conductor
-# Creates a single conductor core in the scene
-# length: Total length of the conductor in Z-axis
-# radius: Radius of the conductor
+## Creates a single conductor core in the scene
+# @param length Total length of the conductor in Z-axis
+# @param radius Radius of the conductor
+# @return The new object
 def make_solid_conductor(length, radius, context):
     circle = make_bezier_circle(radius, context)
     circle.layers = JUNK_LAYER
@@ -478,9 +483,14 @@ def make_solid_conductor(length, radius, context):
 
     return line
 
-# make_stranded_conductor
-# Creates a set of stranded conductor wires
+## Creates a set of stranded conductor wires
 # Use convenience function make_conductor instead of calling this directly
+# @param length Axial length of the conductor
+# @param conductor_radius Radius of the entire conductor
+# @param pitch Number of revolutions per length unit
+# @param strand_radius Radius of individual strands in the conductor
+# @param context Context in wich to create the conductor
+# @return The conductor object
 def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                             context):
     #Create a list of points corresponding to the strand positions
@@ -553,13 +563,13 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 
     return ret
 
-# make_conductor
-# Creates a parametric conductor and puts it in the scene
-# length: Total conductor length in Z-axis
-# conductor_radius: Total radius of the combined conductor
-# strand_radius: Diameter of each strand. 0.0 for solid conductor
-# strand_pitch: Number of revolutions per length unit
-# context: Context in which to create the conductor object
+## Creates a parametric conductor and puts it in the scene
+# @param length Total conductor length in Z-axis
+# @param conductor_radius Total radius of the combined conductor
+# @param strand_radius Diameter of each strand. 0.0 for solid conductor
+# @param strand_pitch Number of revolutions per length unit
+# @param context Context in which to create the conductor object
+# @return The new object
 def make_conductor(length, conductor_radius, strand_radius, 
         strand_pitch, material, context):
     # Solid conductor
@@ -582,13 +592,14 @@ def make_conductor(length, conductor_radius, strand_radius,
 # Creates a helical strand with alternating radii to be used with make_braid
 # function.
 #
-# length: Axial length of helix
-# radius: Radius of strand position
-# pitch: Number of revolutions per length unit in helix
-# points_per_rev: Number of points on helix for each revolution
-# strand_radius: Radius of the strand
-# clockwise: Rotation direction of helix
-# context: Context in which to create the strand
+# @param length Axial length of helix
+# @param radius Radius of strand position
+# @param pitch Number of revolutions per length unit in helix
+# @param points_per_rev Number of points on helix for each revolution
+# @param strand_radius Radius of the strand
+# @param clockwise Rotation direction of helix
+# @param context Context in which to create the strand
+# @return The new object
 def make_braid_strand(length, radius, pitch, points_per_rev, strand_radius, clockwize, context):
     # Calculate angle between each point
     dtheta = (2.0 * math.pi) / points_per_rev
@@ -664,19 +675,19 @@ def make_braid_strand(length, radius, pitch, points_per_rev, strand_radius, cloc
     ret = bpy.data.objects.new('Helix', curveData)
     context.scene.objects.link(ret)
     context.scene.objects.active = ret
-    
     return ret
 
-# Creates a pleated tube object
+## Creates a pleated tube object
 #
-# length: Axial length of braid
-# radius: Radius of strand positions
-# bundle_size: Number of strands in each bundle
-# n_bundle_pairs: Number of spinaches going in each direction
-# pitch: Number of revolutions per length unit
-# strand_radius: Radius of each individual strand
-# material: String describing the conductor material
-# context: Context in which to create the braid
+# @param length Axial length of braid
+# @param radius Radius of strand positions
+# @param bundle_size Number of strands in each bundle
+# @param n_bundle_pairs Number of spinaches going in each direction
+# @param pitch Number of revolutions per length unit
+# @param strand_radius Radius of each individual strand
+# @param material String describing the conductor material
+# @param context Context in which to create the braid
+# @return The new object
 def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
         strand_radius, material, context):
     # Calculate total number of bundles
@@ -729,21 +740,20 @@ def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
     
     return ret
 
-# helical_length
-# Returns the length of a helix
-# radius: Radius of the helix
-# pitch: Number of revolutions per length unit of the helix
-# length: Axial length of the helix
+## Calculate the length of a helix
+# @param radius Radius of the helix
+# @param pitch Number of revolutions per length unit of the helix
+# @param length Axial length of the helix
+# @return The length of the helix
 def helical_length(radius, pitch, length):
     circ = 2.0 * radius * math.pi * length * pitch
     return math.sqrt(circ**2 + length**2)
 
-# make_mesh_straight_strand
-# Adds a cylindrical feature to existing mesh
+## Adds a cylindrical feature to existing mesh
 #
-# length: Axial length of the cylinder
-# radius: Radius of the cylinder
-# mesh_data: Bmesh object to create cylinder in
+# @param length Axial length of the cylinder
+# @param radius Radius of the cylinder
+# @param mesh_data Bmesh object to create cylinder in
 def make_mesh_straight_strand(length, radius, mesh_data):
     ppr = 8
     n_circles = math.floor(100 * length)
@@ -780,15 +790,14 @@ def make_mesh_straight_strand(length, radius, mesh_data):
                 cap_face.append(mesh_data.verts[-j - 1])
             mesh_data.faces.new(cap_face)
 
-#make_mesh_bunched_strand
-# Adds a single twisted strand to an existing mesh
+## Adds a single twisted strand to an existing mesh
 #
-# length: Axial length of the strand
-# radius: Radius of strand position
-# pitch: Revolutions per length unit
-# strand_radius: Radius of the strand
-# mesh_data: Bmesh object in which to create the strand
-# start_angle: Angle of strand position
+# @param length Axial length of the strand
+# @param radius Radius of strand position
+# @param pitch Revolutions per length unit
+# @param strand_radius Radius of the strand
+# @param mesh_data Bmesh object in which to create the strand
+# @param start_angle Angle of strand position
 def make_mesh_bunched_strand(length, radius, pitch, strand_radius, mesh_data, start_angle = 0.0):
     ppr = 8 # Points per revolution
     cpr = 10 # Circles per revolution
@@ -837,13 +846,13 @@ def make_mesh_bunched_strand(length, radius, pitch, strand_radius, mesh_data, st
                 cap_face.append(mesh_data.verts[-(i + 1)])
             mesh_data.faces.new(cap_face)
             
-# make_stranded_mesh_conductor
-# Creates a mesh object representing a bunched set of strands
+## Creates a mesh object representing a bunched set of strands
 # 
-# length: Axial length of the conductor
-# radius: Conductor radius
-# pitch: Number of revolutions per length unit
-# strand_radius: Radius of individual strands
+# @param length Axial length of the conductor
+# @param radius Conductor radius
+# @param pitch Number of revolutions per length unit
+# @param strand_radius Radius of individual strands
+# @return The new object
 def make_stranded_mesh_conductor(length, radius, pitch, strand_radius):
     bm = bmesh.new()
     obj = bpy.data.objects.new("Conductor", bpy.data.meshes.new("ConductorMesh"))
@@ -881,11 +890,11 @@ def make_stranded_mesh_conductor(length, radius, pitch, strand_radius):
     
     return obj
 
-# make_solid_mesh_conductor
-# Creates an object with a cylinder mesh
+## Creates an object with a cylinder mesh
 #
-# length: Axial length in Z-axis
-# radius: Radius of the conductor
+# @param length Axial length in Z-axis
+# @param radius Radius of the conductor
+# @return The new object
 def make_solid_mesh_conductor(length, radius):
     bm = bmesh.new()
     obj = bpy.data.objects.new("Conductor", bpy.data.meshes.new("ConductorMesh"))
@@ -903,12 +912,11 @@ def make_solid_mesh_conductor(length, radius):
 
     return obj
 
-# make_mesh_conductor
-# Creates a parametric conductor and puts it in the scene
-# length: Total conductor axial length in Z-axis
-# conductor_radius: Total radius of the combined conductor
-# strand_radius: Diameter of each strand. 0.0 for solid conductor
-# strand_pitch: Number of revolutions per length unit
+## Creates a parametric conductor and puts it in the scene
+# @param length Total conductor axial length in Z-axis
+# @param conductor_radius Total radius of the combined conductor
+# @param strand_radius Diameter of each strand. 0.0 for solid conductor
+# @param strand_pitch Number of revolutions per length unit
 def make_mesh_conductor(length, conductor_radius, strand_radius, 
         strand_pitch, material):
     # Solid conductor
@@ -934,19 +942,19 @@ def make_mesh_conductor(length, conductor_radius, strand_radius,
 
     return conductor
 
-# make_conductor_array
-# Returns a circular array of conductors
+## Returns a circular array of conductors
 #
-# length: Length of conductors in Z-axis
-# pitch: Pitch of the entire conductor array
-# radius: Radius of conductor array
-# conductor_radius: Radius of each individual conductor
-# strand_pitch: Pitch of the individual strands in each conductor
-# material: String describing the conductor material
-# strand_radius: Radius of individual strands
-# clockwise: Direction of array rotation
-# n_conductors: Number of conductors in array
-# context: Context in which to create the array
+# @param length Length of conductors in Z-axis
+# @param pitch Pitch of the entire conductor array
+# @param radius Radius of conductor array
+# @param conductor_radius Radius of each individual conductor
+# @param strand_pitch Pitch of the individual strands in each conductor
+# @param material String describing the conductor material
+# @param strand_radius Radius of individual strands
+# @param clockwise Direction of array rotation
+# @param n_conductors Number of conductors in array
+# @param context Context in which to create the array
+# @return The new object
 def make_conductor_array(length, pitch, radius, conductor_radius, 
                          strand_pitch, material, strand_radius, 
                          clockwize, n_conductors, context):
@@ -990,19 +998,19 @@ def make_conductor_array(length, pitch, radius, conductor_radius,
 
     return conductor
 
-# make_insulator_array
-# Creates a circular array of insulators
+## Creates a circular array of insulators
 #
-# length: Axial length of the array
-# pitch: Number of revolutions per length unit
-# radius: Radius of the array
-# outer_radius: Outer radius of individual insulators
-# inner_radius: Inner radius of individual insulators
-# material: String representing the name of insulator material
-# colours: White space separated string of colour names
-# clockwise: Rotation direction of array helix
-# peel_length: How much of the insulator end to be removed
-# context: Context in which to create the array
+# @param length Axial length of the array
+# @param pitch Number of revolutions per length unit
+# @param radius Radius of the array
+# @param outer_radius Outer radius of individual insulators
+# @param inner_radius Inner radius of individual insulators
+# @param material String representing the name of insulator material
+# @param colours White space separated string of colour names
+# @param clockwise Rotation direction of array helix
+# @param peel_length How much of the insulator end to be removed
+# @param context Context in which to create the array
+# @return The new object
 def make_insulator_array(length, pitch, radius, outer_radius, 
                         inner_radius, material, colors, clockwize, 
                         peel_length, context):
@@ -1065,23 +1073,23 @@ def make_insulator_array(length, pitch, radius, outer_radius,
     return ret
 
 
-# make_part_array
-# Creates a circular array of conductors with insulators
+## Creates a circular array of conductors with insulators
 #
-# length: Axial length of the array
-# pitch: Array pitch
-# radius: Array radius
-# clockwise: Rotation direction of the array
-# ins_outer_radius: Outer radius of the insulator
-# ins_inner_radius: Inner radius of the insulator
-# ins_material: String representing material of the insulator
-# ins_colours: A string of colours describing the insulator colours. White space separated
-# ins_peel_length: How much of the insulator is pulled back to reveal conductor
-# cond_radius: Radius of conductor
-# cond_strand_pitch: How many revolutions per length unit are the strands twisted
-# cond_material: String representing material of the conductor
-# cond_strand_radius: Radius of the individual conductor strands
-# context: Context in which to create the array
+# @param length Axial length of the array
+# @param pitch Array pitch
+# @param radius Array radius
+# @param clockwise Rotation direction of the array
+# @param ins_outer_radius Outer radius of the insulator
+# @param ins_inner_radius Inner radius of the insulator
+# @param ins_material String representing material of the insulator
+# @param ins_colours A string of colours describing the insulator colours. White space separated
+# @param ins_peel_length How much of the insulator is pulled back to reveal conductor
+# @param cond_radius Radius of conductor
+# @param cond_strand_pitch How many revolutions per length unit are the strands twisted
+# @param cond_material String representing material of the conductor
+# @param cond_strand_radius Radius of the individual conductor strands
+# @param context Context in which to create the array
+# @return The new object
 def make_part_array(length, pitch, radius, clockwize, ins_outer_radius, ins_inner_radius,
                     ins_material, ins_colors, ins_peel_length, cond_radius, cond_strand_pitch,
                     cond_material, cond_strand_radius, context ):
@@ -1100,19 +1108,19 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius, ins_inne
 
     return ins_arr
 
-# make_part
-# Convenience function to create an insulated conductor
+## Convenience function to create an insulated conductor
 #
-# length: Length of the part in Z-axis
-# ins_radius: Outer radius of the insulator
-# ins_colour: String representing the insulator colour
-# ins_material: String representing the insulator material
-# peel_length: How much of the insulator to be pulled back to reveal conductor
-# cond_radius: Conductor radius
-# cond_material: Material of conductor
-# strand_radius: Radius of individual strands
-# strand_pitch: Revolutions per length unit in strand twisting
-# context: Context in which to create the part
+# @param length Length of the part in Z-axis
+# @param ins_radius Outer radius of the insulator
+# @param ins_colour String representing the insulator colour
+# @param ins_material String representing the insulator material
+# @param peel_length How much of the insulator to be pulled back to reveal conductor
+# @param cond_radius Conductor radius
+# @param cond_material Material of conductor
+# @param strand_radius Radius of individual strands
+# @param strand_pitch Revolutions per length unit in strand twisting
+# @param context Context in which to create the part
+# @return The new object
 def make_part(length, ins_radius, ins_color, ins_material, peel_length, cond_radius, 
               cond_material, strand_radius, strand_pitch, context):
     insulator = make_insulator(cond_radius, ins_radius, length, peel_length, 
@@ -1124,13 +1132,13 @@ def make_part(length, ins_radius, ins_color, ins_material, peel_length, cond_rad
     
     return insulator
 
-# make_mesh_tube
-# Creates a tubular mesh object
+## Creates a tubular mesh object
 #
-# outer_radius: Outer radius of tube
-# inner_radius: Inner radius of tube
-# length: Length of the tube in Z-axis
-# context: Context in which to create the tube
+# @param outer_radius Outer radius of tube
+# @param inner_radius Inner radius of tube
+# @param length Length of the tube in Z-axis
+# @param context Context in which to create the tube
+# @return The new object
 def make_mesh_tube(outer_radius, inner_radius, length, context):
     if inner_radius >= outer_radius:
         raise InputError("Inner radius too big")
