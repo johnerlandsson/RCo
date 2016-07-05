@@ -99,21 +99,20 @@ def make_bezier_circle(radius, context):
 
         hh = math.sqrt(radius**2 + handle_length**2)
         htheta = math.acos(radius / hh)
-        polyline.bezier_points[i].handle_left[0] = hh * math.cos((dtheta * i) -
+        polyline.bezier_points[i].handle_left[0] = hh * math.cos((-dtheta * i) +
                                                                  htheta)
-        polyline.bezier_points[i].handle_left[1] = hh * math.sin((dtheta * i) -
+        polyline.bezier_points[i].handle_left[1] = hh * math.sin((-dtheta * i) +
                                                                  htheta)
-        polyline.bezier_points[i].handle_right[0] = hh * math.cos((dtheta * i)
-                                                                  + htheta)
-        polyline.bezier_points[i].handle_right[1] = hh * math.sin((dtheta * i)
-                                                                  + htheta)
+        polyline.bezier_points[i].handle_right[0] = hh * math.cos((-dtheta * i)
+                                                                  - htheta)
+        polyline.bezier_points[i].handle_right[1] = hh * math.sin((-dtheta * i)
+                                                                  - htheta)
 
     ret = bpy.data.objects.new('Circle', curveData)
     context.scene.objects.link(ret)
     context.scene.objects.active = ret
 
     return ret
-
 
 ## Creates a line object
 # @param p1 First point of line segment
