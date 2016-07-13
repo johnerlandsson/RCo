@@ -4,3 +4,4 @@ blender-script/modules/*.swp
 blender-script/addons/*.swp
 *.swp
 *rc-tmp*
+/work
