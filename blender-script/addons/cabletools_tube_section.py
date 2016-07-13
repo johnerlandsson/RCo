@@ -4,9 +4,9 @@ bl_info = {
 }
 
 import bpy
-import cabletools as ct
+import rco
 
-bpy.types.Scene.CT_tube_section_outer_dia = bpy.props.FloatProperty(
+bpy.types.Scene.RCO_tube_section_outer_dia = bpy.props.FloatProperty(
         name = "Outer diameter",
         description = "Diameter of outer circle",
         default = 1.5,
@@ -15,7 +15,7 @@ bpy.types.Scene.CT_tube_section_outer_dia = bpy.props.FloatProperty(
         min = 0.1,
         max = 100.0)
 
-bpy.types.Scene.CT_tube_section_inner_dia = bpy.props.FloatProperty(
+bpy.types.Scene.RCO_tube_section_inner_dia = bpy.props.FloatProperty(
         name = "Inner diameter",
         description = "Diameter of inner circle",
         subtype = 'DISTANCE',
@@ -25,15 +25,15 @@ bpy.types.Scene.CT_tube_section_inner_dia = bpy.props.FloatProperty(
         max = 100.0)
 
 class TubeSection(bpy.types.Operator):
-    bl_idname = "ct.tube_section"
+    bl_idname = "rco.tube_section"
     bl_label = "Tube section"
     bl_options = {'REGISTER'}
 
     def execute(self, context):
         scene = context.scene
-        outer_radius = scene.CT_tube_section_outer_dia / 2.0
-        inner_radius = scene.CT_tube_section_inner_dia / 2.0
-        ct.make_tube_section(outer_radius, inner_radius, context)
+        outer_radius = scene.RCO_tube_section_outer_dia / 2.0
+        inner_radius = scene.RCO_tube_section_inner_dia / 2.0
+        rco.make_tube_section(outer_radius, inner_radius, context)
 
         return {'FINISHED'}
 
@@ -49,9 +49,9 @@ class TubeSectionUI(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = bpy.context.scene
-        layout.prop(scene, "CT_tube_section_outer_dia")
-        layout.prop(scene, "CT_tube_section_inner_dia")
-        layout.operator("ct.tube_section", text = "Make")
+        layout.prop(scene, "RCO_tube_section_outer_dia")
+        layout.prop(scene, "RCO_tube_section_inner_dia")
+        layout.operator("rco.tube_section", text = "Make")
 
 def register():
     bpy.utils.register_class(TubeSection)
