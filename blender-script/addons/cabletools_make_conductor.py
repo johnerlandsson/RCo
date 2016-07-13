@@ -1,6 +1,6 @@
 bl_info = {
         "name": "Make conductor",
-        "category": "Object",
+        "category": "RCo",
 }
 
 import bpy

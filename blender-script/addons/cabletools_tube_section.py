@@ -1,6 +1,6 @@
 bl_info = {
         "name": "Tube section",
-        "category": "Object",
+        "category": "RCo",
 }
 
 import bpy

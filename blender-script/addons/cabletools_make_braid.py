@@ -1,6 +1,6 @@
 bl_info = {
     "name": "Make braid",
-    "category": "Object",
+    "category": "RCo",
 }
 
 import bpy

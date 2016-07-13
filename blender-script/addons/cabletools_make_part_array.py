@@ -1,6 +1,6 @@
 bl_info = {
         "name": "Make part array",
-        "category": "Object",
+        "category": "RCo",
         "description": "Cabletools: Create a circular array of parts"
 }
 

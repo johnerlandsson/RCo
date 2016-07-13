@@ -3,7 +3,7 @@ import cabletools as ct
 
 bl_info = {
         "name": "Striped tube section",
-        "category": "Object",
+        "category": "RCo",
 }
 
 bpy.types.Scene.CT_striped_tube_section_outer_dia = bpy.props.FloatProperty(

@@ -1,6 +1,6 @@
 bl_info = {
         "name": "Line segment",
-        "category": "Object",
+        "category": "RCo",
 }
 
 import bpy

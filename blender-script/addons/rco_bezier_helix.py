@@ -1,6 +1,6 @@
 bl_info = {
         "name": "Bezier helix",
-        "category": "Object",
+        "category": "RCo",
 }
 
 import bpy

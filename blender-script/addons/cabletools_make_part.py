@@ -1,6 +1,6 @@
 bl_info = {
         "name": "Make part",
-        "category": "Object",
+        "category": "RCo",
         "description": "Cabletools: Create a single part"
 }
 

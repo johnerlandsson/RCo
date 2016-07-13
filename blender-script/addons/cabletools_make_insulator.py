@@ -1,6 +1,6 @@
 bl_info = {
         "name": "Make insulator",
-        "category": "Object",
+        "category": "RCo",
 }
 
 import bpy

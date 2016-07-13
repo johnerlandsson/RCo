@@ -1,6 +1,6 @@
 bl_info = {
     "name": "Creates a central filler",
-    "category": "Object",
+    "category": "RCo",
 }
 
 import bpy
