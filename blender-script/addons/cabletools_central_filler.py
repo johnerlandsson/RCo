@@ -18,7 +18,7 @@ bpy.types.Scene.CT_make_central_filler_diameter = bpy.props.FloatProperty(
     max=0.3)
 
 bpy.types.Scene.CT_make_central_filler_length = bpy.props.FloatProperty(
-    name="Diameter",
+    name="Length",
     description="Length of the filler",
     default=0.27,
     subtype='DISTANCE',
