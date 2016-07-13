@@ -945,7 +945,6 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius,
 
     return ins_arr
 
-
 ## Convenience function to create an insulated conductor
 #
 # @param length Length of the part in Z-axis

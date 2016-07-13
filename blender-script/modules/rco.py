@@ -1,5 +1,6 @@
-## @package cabletools
-# This package contains functions to create cable related objects in blender.
+## @package rco
+# This package contains functions to create primitive mesh and curve objects.
+# Dont add materials here
 
 import bpy
 import bmesh
