@@ -255,7 +255,9 @@ def make_mesh_tube(outer_radius, inner_radius, length, context):
         raise InputError("Outer radius too small")
 
     # Calculate points per revolution
+#TODO make this work properly
     ppr = math.floor(3.7 * math.log(outer_radius) + 32.0)
+    ppr += ppr % 8
     if ppr <= 0:
         ppr = 4
 
@@ -307,3 +309,5 @@ def make_mesh_tube(outer_radius, inner_radius, length, context):
     subsurf_mod = obj.modifiers.new('SubSurf', type="SUBSURF")
     subsurf_mod.levels = 1
     subsurf_mod.render_levels = 2
+
+    return obj

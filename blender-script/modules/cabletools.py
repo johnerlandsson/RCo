@@ -970,3 +970,20 @@ def make_part(length, ins_radius, ins_color, ins_material, peel_length,
 
     return insulator
 
+## 
+# @brief Convenience function to create a central filler
+# 
+# @param length Axial length of the filler
+# @param outer_radius Outer radius of the filler
+# @param inner_radius Inner radius of the filler
+# @param material Filler material
+# @param context Context in wich to create the filler
+# 
+# @return the central filler object
+def make_central_filler(length, outer_radius, inner_radius, material, context):
+    filler = make_mesh_tube(outer_radius, inner_radius, length, context)
+    filler.name = "Filler"
+    color = cm.INSULATOR_COLORS["beige"]
+    filler.active_material = cm.INSULATOR_MATERIALS[material](color)
+
+    return filler
