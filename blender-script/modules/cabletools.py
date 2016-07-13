@@ -21,6 +21,7 @@ for k in cm.INSULATOR_COLORS:
 for k in cm.STRIPE_TYPES:
     INSULATOR_COLORS.append((k, k, k))
 
+
 ## Creates two joined circles
 # @param outer_radius Radius of the outer circle
 # @param inner_radius Radius of the inner circle
@@ -41,6 +42,7 @@ def make_tube_section(outer_radius, inner_radius, context):
     ret.name = "TubeSection"
 
     return ret
+
 
 ## Creates part of a tube section. To be used for striped insulators
 # @param outer_radius Radius of the outer circle
@@ -136,6 +138,7 @@ def make_tube_section_slice(outer_radius, inner_radius, amount, mirror,
     context.scene.objects.active = ret
 
     return ret
+
 
 ## Creates two curve objects representing the cross section of a striped
 # insulator.
@@ -235,6 +238,7 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         raise InputError("\"%s\" is not a valid colour:" % color_name)
 
     return line
+
 
 ## Circle packing algorithm
 # @param conductor_radius Radius of the larger circle
@@ -575,7 +579,7 @@ def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
 def make_mesh_straight_strand(length, radius, mesh_data):
     ppr = 8
     n_circles = math.floor(100 * length)
-    dz = length / 10
+    dz = length / n_circles
     dtheta = (2.0 * math.pi) / ppr
 
     for i in range(n_circles + 1):
@@ -771,7 +775,8 @@ def make_mesh_conductor(length, conductor_radius, strand_radius, strand_pitch,
     return conductor
 
 
-## Returns a circular array of conductors
+## 
+# @breif Returns a circular array of conductors
 #
 # @param length Length of conductors in Z-axis
 # @param pitch Pitch of the entire conductor array
@@ -783,6 +788,7 @@ def make_mesh_conductor(length, conductor_radius, strand_radius, strand_pitch,
 # @param clockwise Direction of array rotation
 # @param n_conductors Number of conductors in array
 # @param context Context in which to create the array
+#
 # @return The new object
 def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
                          material, strand_radius, clockwize, n_conductors,
@@ -795,9 +801,9 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
                                     context)
 
     # Create conductor
-    conductor = make_mesh_conductor(
-        helical_length(radius, pitch, length), conductor_radius, strand_radius,
-        strand_pitch, material)
+    hl = helical_length(radius, pitch, length)
+    conductor = make_mesh_conductor(hl, conductor_radius, strand_radius,
+                                    strand_pitch, material)
 
     #Apply edge split modifier
     bpy.ops.object.modifier_apply(apply_as='DATA', modifier="EdgeSplit")
@@ -945,6 +951,7 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius,
 
     return ins_arr
 
+
 ## Convenience function to create an insulated conductor
 #
 # @param length Length of the part in Z-axis
@@ -969,6 +976,7 @@ def make_part(length, ins_radius, ins_color, ins_material, peel_length,
     insulator.name = "Part"
 
     return insulator
+
 
 ## 
 # @brief Convenience function to create a central filler
