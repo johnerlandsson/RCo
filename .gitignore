@@ -3,3 +3,4 @@ blender-script/modules/__pycache__/
 blender-script/modules/*.swp
 blender-script/addons/*.swp
 *.swp
+*rc-tmp*
