@@ -311,3 +311,48 @@ def make_mesh_tube(outer_radius, inner_radius, length, context):
     subsurf_mod.render_levels = 2
 
     return obj
+
+## 
+# @brief Creates a shell tube with zero thickness
+# 
+# @param length Length of the tube
+# @param radius Radius of the tube
+# @param context Context in wich to create the tube
+# 
+# @return The tube object
+def make_mesh_shell_tube(length, radius, context):
+    ppr = 16
+    dtheta = (2.0 * math.pi) / ppr
+    bm = bmesh.new()
+    obj = bpy.data.objects.new("ShellTube",
+                               bpy.data.meshes.new("ShellTubeMesh"))
+    context.scene.objects.link(obj)
+
+    # Create vertecies
+    for i in range(ppr):
+        x = radius * math.sin(i * dtheta)
+        y = radius * math.cos(i * dtheta)
+
+        bm.verts.new((x, y, 0))
+        bm.verts.new((x, y, length))
+
+    bm.verts.ensure_lookup_table()
+    # Create faces
+    for i in range(0, (ppr * 2) - 3, 2):
+        bm.faces.new((bm.verts[i], bm.verts[i + 1], bm.verts[i + 3],
+                      bm.verts[i + 2]))
+
+    # Create last face
+    bm.faces.new((bm.verts[(ppr * 2) - 1], bm.verts[(ppr * 2) - 2], bm.verts[0],
+                  bm.verts[1]))
+
+    bm.to_mesh(obj.data)
+
+    # Set smooth shading
+    for f in obj.data.polygons:
+        f.use_smooth = True
+
+    # Calculate normals
+    obj.data.update(1)
+
+    return obj
