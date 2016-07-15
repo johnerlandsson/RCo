@@ -5,7 +5,7 @@ import bmesh
 import bpy
 import cablematerials as cm
 import math
-from rco import *
+import rco
 
 CONDUCTOR_MATERIALS = [('cu', 'CU', 'Standard copper'),
                        ('cu-t', 'CU-Tinned', 'Tinned copper'),
@@ -21,7 +21,6 @@ for k in cm.INSULATOR_COLORS:
 for k in cm.STRIPE_TYPES:
     INSULATOR_COLORS.append((k, k, k))
 
-
 ## Creates two joined circles
 # @param outer_radius Radius of the outer circle
 # @param inner_radius Radius of the inner circle
@@ -34,8 +33,8 @@ def make_tube_section(outer_radius, inner_radius, context):
         raise InputError("Invalid inner radius")
 
     # Create circles
-    outer_circle = make_bezier_circle(outer_radius, context)
-    inner_circle = make_bezier_circle(inner_radius, context)
+    outer_circle = rco.make_bezier_circle(outer_radius, context)
+    inner_circle = rco.make_bezier_circle(inner_radius, context)
 
     # Join circles
     ret = join_objects([outer_circle, inner_circle], context)
@@ -199,7 +198,7 @@ def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided,
 def make_insulator(inner_radius, outer_radius, length, peel_length, material,
                    color_name, context):
     # Create guide curve
-    line = make_line((0, 0, length), (0, 0, 0), 1, context)
+    line = rco.make_line((0, 0, length), (0, 0, 0), 1, context)
     line.data.use_fill_caps = True
     line.data.bevel_factor_start = peel_length * (1.0 / length)
     line.name = "Insulator"
@@ -284,10 +283,10 @@ def strand_positions(conductor_radius, strand_radius):
 # @param radius Radius of the conductor
 # @return The new object
 def make_solid_conductor(length, radius, context):
-    circle = make_bezier_circle(radius, context)
+    circle = rco.make_bezier_circle(radius, context)
     circle.layers = JUNK_LAYER
 
-    line = make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0),
+    line = rco.make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0),
                      context)
     line.name = "Conductor"
     line.data.bevel_object = circle
@@ -314,7 +313,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
     points = strand_positions(conductor_radius - strand_radius, strand_radius)
 
     #Create a circle to be used as a bevel object
-    circle = make_bezier_circle(strand_radius, context)
+    circle = rco.make_bezier_circle(strand_radius, context)
     circle.layers = JUNK_LAYER
 
     #Create progress indicator
@@ -340,10 +339,10 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 
             if i == 0:
                 if about_eq(pitch, 0.0):
-                    path = make_line((r, 0, 0), (r, 0, length),
+                    path = rco.make_line((r, 0, 0), (r, 0, length),
                                      math.floor(length * 200.0), context)
                 else:
-                    path = make_bezier_helix(length=length,
+                    path = rco.make_bezier_helix(length=length,
                                              pitch=pitch,
                                              radius=r,
                                              clockwize=True,
@@ -527,7 +526,7 @@ def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
     wm.progress_begin(0, n_bundles + bundle_size)
 
     # Create shared bevel object
-    strand_profile = make_bezier_circle(strand_radius, context)
+    strand_profile = rco.make_bezier_circle(strand_radius, context)
 
     # Calculate angles
     dtheta = (2.0 * math.pi) / n_bundles
@@ -914,7 +913,8 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
     return ret
 
 
-## Creates a circular array of conductors with insulators
+## 
+# @brief Creates a circular array of conductors with insulators
 #
 # @param length Axial length of the array
 # @param pitch Array pitch
@@ -930,6 +930,7 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
 # @param cond_material String representing material of the conductor
 # @param cond_strand_radius Radius of the individual conductor strands
 # @param context Context in which to create the array
+#
 # @return The new object
 def make_part_array(length, pitch, radius, clockwize, ins_outer_radius,
                     ins_inner_radius, ins_material, ins_colors,
@@ -952,7 +953,8 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius,
     return ins_arr
 
 
-## Convenience function to create an insulated conductor
+## 
+# @brief Convenience function to create an insulated conductor
 #
 # @param length Length of the part in Z-axis
 # @param ins_radius Outer radius of the insulator
@@ -964,6 +966,7 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius,
 # @param strand_radius Radius of individual strands
 # @param strand_pitch Revolutions per length unit in strand twisting
 # @param context Context in which to create the part
+#
 # @return The new object
 def make_part(length, ins_radius, ins_color, ins_material, peel_length,
               cond_radius, cond_material, strand_radius, strand_pitch,
@@ -995,3 +998,29 @@ def make_central_filler(length, outer_radius, inner_radius, material, context):
     filler.active_material = cm.INSULATOR_MATERIALS[material](color)
 
     return filler
+
+## 
+# @brief Creates a mesh shell tube representing cable lapping
+# 
+# @param length Length of the tube
+# @param radius Tube radius
+# @param material Name of the material
+# @param context Context in wich to create the lap
+# 
+# @return The object
+def make_lap(length, radius, material, context):
+    # Create object
+    lap = rco.make_mesh_shell_tube(length, radius, context)
+    lap.name = "Lap"
+
+    # Add material
+    lap.active_material = cm.LAP_MATERIALS[material]()
+
+    # Add modifiers
+    es_mod = lap.modifiers.new('EdgeSplit', type='EDGE_SPLIT')
+    es_mod.split_angle = 1.22
+    ss_mod = lap.modifiers.new('SubSurf', type='SUBSURF')
+    ss_mod.levels = 0
+    ss_mod.render_levels = 2
+
+    return lap

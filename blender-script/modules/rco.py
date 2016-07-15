@@ -343,8 +343,8 @@ def make_mesh_shell_tube(length, radius, context):
                       bm.verts[i + 2]))
 
     # Create last face
-    bm.faces.new((bm.verts[(ppr * 2) - 1], bm.verts[(ppr * 2) - 2], bm.verts[0],
-                  bm.verts[1]))
+    bm.faces.new((bm.verts[0], bm.verts[(ppr * 2) - 2],
+                  bm.verts[(ppr * 2) - 1], bm.verts[1]))
 
     bm.to_mesh(obj.data)
 

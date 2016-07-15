@@ -1,10 +1,14 @@
+## @package cablematerials
+# This package contains material stuff for cabletools
 import bpy
 import os
 
-
-# append material node group from file
-# folder_path: folder path for blend file
-# obj_name: Name of node group in file
+## 
+# @brief Append material node group from blendfile
+# 
+# @param folder_path Path to folder containing the blendfile
+# @param filename Filename
+# @param obj_name Name of the nodegroup in file
 def append_nodegroup(
         folder_path=os.path.dirname(__file__) + "/../../blender-materials/",
         filename="cabletools.blend",
@@ -17,15 +21,16 @@ def append_nodegroup(
                       filename=obj_name,
                       link=False)
 
-
-# insulator_material
-# General function to append an insulator material. Should not be called
+## 
+# @brief General function to append an insulator material. Should not be called
 # directly. Use convenience functions.
-#
-# color: Material color
-# material_name: Name of material to append
-# material_node_group_name: Name of node group containing the material
-# object_radius: Radius of object for texture scale
+# 
+# @param color Color of the material
+# @param material_name Name of the material in cablematerials.blend
+# @param material_node_group_name Name of the nodegroup in cablematerials.blend
+# @param object_radius Radius of the object for texture scale
+# 
+# @return The material
 def insulator_material(color, material_name, material_node_group_name,
                        object_radius):
     #Append material
