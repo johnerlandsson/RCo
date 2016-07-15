@@ -12,8 +12,9 @@ CONDUCTOR_MATERIALS = [('cu', 'CU', 'Standard copper'),
                        ('al', 'AL', 'Aluminium')]
 INSULATOR_MATERIALS = [('pvc', 'PVC', 'PVC'), ('pe', 'PE', 'Polyethelene'),
                        ('pex', 'PEX', 'Cross linked polyethylene')]
-LAP_MATERIALS = [('cu', 'CU', 'Standard copper'),
-                 ('nylon', 'Nylon', 'Nylon felt lap')]
+LAP_MATERIALS = [('plastic', 'Plastic', 'Transparent plastic'),
+                 ('nylon', 'Nylon', 'Nylon felt lap'),
+                 ('chrome', 'Chrome', 'Chrome lap')]
 
 INSULATOR_COLORS = []
 for k in cm.INSULATOR_COLORS:
@@ -37,7 +38,7 @@ def make_tube_section(outer_radius, inner_radius, context):
     inner_circle = rco.make_bezier_circle(inner_radius, context)
 
     # Join circles
-    ret = join_objects([outer_circle, inner_circle], context)
+    ret = rco.join_objects([outer_circle, inner_circle], context)
     ret.name = "TubeSection"
 
     return ret
@@ -159,13 +160,13 @@ def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided,
                                         (1.0 - amount) / 2.0, False, context)
         second = make_tube_section_slice(outer_radius, inner_radius,
                                          (1.0 - amount) / 2.0, True, context)
-        base = join_objects([first, second], context)
+        base = rco.join_objects([first, second], context)
 
         first = make_tube_section_slice(outer_radius, inner_radius,
                                         amount / 2.0, False, context)
         second = make_tube_section_slice(outer_radius, inner_radius,
                                          amount / 2.0, True, context)
-        stripe = join_objects([first, second], context)
+        stripe = rco.join_objects([first, second], context)
         theta = math.pi
     else:
         base = make_tube_section_slice(outer_radius, inner_radius,
@@ -284,7 +285,7 @@ def strand_positions(conductor_radius, strand_radius):
 # @return The new object
 def make_solid_conductor(length, radius, context):
     circle = rco.make_bezier_circle(radius, context)
-    circle.layers = JUNK_LAYER
+    circle.layers = rco.JUNK_LAYER
 
     line = rco.make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0),
                      context)
@@ -314,7 +315,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 
     #Create a circle to be used as a bevel object
     circle = rco.make_bezier_circle(strand_radius, context)
-    circle.layers = JUNK_LAYER
+    circle.layers = rco.JUNK_LAYER
 
     #Create progress indicator
     wm = bpy.context.window_manager
@@ -332,13 +333,13 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 
         for i in range(len(row)):
             # Use make_solid_conductor for centred strand
-            if about_eq(r, 0.0):
+            if rco.about_eq(r, 0.0):
                 strands.append(make_solid_conductor(length, strand_radius,
                                                     context))
                 continue
 
             if i == 0:
-                if about_eq(pitch, 0.0):
+                if rco.about_eq(pitch, 0.0):
                     path = rco.make_line((r, 0, 0), (r, 0, length),
                                      math.floor(length * 200.0), context)
                 else:
@@ -371,7 +372,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
             theta += dtheta
 
             # Join strands
-    ret = join_objects(strands, context)
+    ret = rco.join_objects(strands, context)
     ret.name = "Conductor"
     circle.parent = ret
 
@@ -390,7 +391,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 def make_conductor(length, conductor_radius, strand_radius, strand_pitch,
                    material, context):
     # Solid conductor
-    if conductor_radius == strand_radius or about_eq(strand_radius, 0.0):
+    if conductor_radius == strand_radius or rco.about_eq(strand_radius, 0.0):
         conductor = make_solid_conductor(length=length,
                                          radius=conductor_radius,
                                          context=context)
@@ -544,23 +545,23 @@ def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
 
     progress = 0
     for i in range(1, n_bundles):
-        cw_strands.append(deep_link_object(cw_strands[0], context))
+        cw_strands.append(rco.deep_link_object(cw_strands[0], context))
         cw_strands[-1].rotation_euler = (0, 0, (i * dtheta))
-        ccw_strands.append(deep_link_object(ccw_strands[0], context))
+        ccw_strands.append(rco.deep_link_object(ccw_strands[0], context))
         ccw_strands[-1].rotation_euler = (0, 0, (i * dtheta) + (dtheta / 2))
         progress += 1
         wm.progress_update(progress)
 
     cw_strands += ccw_strands
-    strands = [join_objects(cw_strands, context)]
+    strands = [rco.join_objects(cw_strands, context)]
 
     for i in range(bundle_size):
-        strands.append(deep_link_object(strands[0], context))
+        strands.append(rco.deep_link_object(strands[0], context))
         strands[-1].rotation_euler = (0, 0, strand_dtheta * i)
         progress += 1
         wm.progress_update(progress)
 
-    ret = join_objects(strands, context)
+    ret = rco.join_objects(strands, context)
     ret.name = "Braid"
 
     ret.active_material = cm.CONDUCTOR_MATERIALS[material]()
@@ -750,7 +751,7 @@ def make_solid_mesh_conductor(length, radius):
 def make_mesh_conductor(length, conductor_radius, strand_radius, strand_pitch,
                         material):
     # Solid conductor
-    if conductor_radius == strand_radius or about_eq(strand_radius, 0.0):
+    if conductor_radius == strand_radius or rco.about_eq(strand_radius, 0.0):
         conductor = make_solid_mesh_conductor(length=length,
                                               radius=conductor_radius)
     # Stranded conductor
@@ -796,11 +797,11 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
         return None
 
     # Create guide curve for curve modifier
-    guide_curve = make_bezier_helix(length, pitch, radius, clockwize, 1,
+    guide_curve = rco.make_bezier_helix(length, pitch, radius, clockwize, 1,
                                     context)
 
     # Create conductor
-    hl = helical_length(radius, pitch, length)
+    hl = rco.helical_length(radius, pitch, length)
     conductor = make_mesh_conductor(hl, conductor_radius, strand_radius,
                                     strand_pitch, material)
 
@@ -822,7 +823,7 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
     # Duplicate and rotate
     theta = dtheta = (2.0 * math.pi) / n_conductors
     for i in range(0, n_conductors - 1):
-        ob_new = deep_link_object(conductor, context)
+        ob_new = rco.deep_link_object(conductor, context)
         ob_new.rotation_euler = (0, 0, theta)
         conductors.append(ob_new)
         ob_new.parent = conductor
@@ -858,14 +859,14 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
                                         context)
         guide_curve.data.use_fill_caps = True
         guide_curve.data.twist_mode = 'Z_UP'
-        helix_length = helical_length(radius, pitch, length)
+        helix_length = rco.helical_length(radius, pitch, length)
         guide_curve.data.bevel_factor_start = peel_length * (1 / helix_length)
 
         # Solid coloured insulator
         if color_name in cm.INSULATOR_COLORS.keys():
             base_profile = make_tube_section(outer_radius, inner_radius,
                                              context)
-            base_profile.layers = JUNK_LAYER
+            base_profile.layers = rco.JUNK_LAYER
             base_profile.parent = guide_curve
             guide_curve.data.bevel_object = base_profile
             color = cm.INSULATOR_COLORS[color_name]
@@ -992,7 +993,7 @@ def make_part(length, ins_radius, ins_color, ins_material, peel_length,
 # 
 # @return the central filler object
 def make_central_filler(length, outer_radius, inner_radius, material, context):
-    filler = make_mesh_tube(outer_radius, inner_radius, length, context)
+    filler = rco.make_mesh_tube(outer_radius, inner_radius, length, context)
     filler.name = "Filler"
     color = cm.INSULATOR_COLORS["beige"]
     filler.active_material = cm.INSULATOR_MATERIALS[material](color)
