@@ -22,6 +22,7 @@ for k in cm.INSULATOR_COLORS:
 for k in cm.STRIPE_TYPES:
     INSULATOR_COLORS.append((k, k, k))
 
+
 ## Creates two joined circles
 # @param outer_radius Radius of the outer circle
 # @param inner_radius Radius of the inner circle
@@ -178,9 +179,9 @@ def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided,
     theta_offs = 0
     for spline in stripe.data.splines:
         for p in spline.bezier_points:
-            rotate_point_xy(p.co, theta + theta_offs)
-            rotate_point_xy(p.handle_left, theta + theta_offs)
-            rotate_point_xy(p.handle_right, theta + theta_offs)
+            rco.rotate_point_xy(p.co, theta + theta_offs)
+            rco.rotate_point_xy(p.handle_left, theta + theta_offs)
+            rco.rotate_point_xy(p.handle_right, theta + theta_offs)
 
         theta_offs += math.pi
 
@@ -288,7 +289,7 @@ def make_solid_conductor(length, radius, context):
     circle.layers = rco.JUNK_LAYER
 
     line = rco.make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0),
-                     context)
+                         context)
     line.name = "Conductor"
     line.data.bevel_object = circle
     line.data.use_fill_caps = True
@@ -334,21 +335,22 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
         for i in range(len(row)):
             # Use make_solid_conductor for centred strand
             if rco.about_eq(r, 0.0):
-                strands.append(make_solid_conductor(length, strand_radius,
-                                                    context))
+                strands.append(
+                    make_solid_conductor(length, strand_radius, context))
                 continue
 
             if i == 0:
                 if rco.about_eq(pitch, 0.0):
                     path = rco.make_line((r, 0, 0), (r, 0, length),
-                                     math.floor(length * 200.0), context)
+                                         math.floor(length * 200.0), context)
                 else:
-                    path = rco.make_bezier_helix(length=length,
-                                             pitch=pitch,
-                                             radius=r,
-                                             clockwize=True,
-                                             n_subdivisions=1,
-                                             context=context)
+                    path = rco.make_bezier_helix(
+                        length=length,
+                        pitch=pitch,
+                        radius=r,
+                        clockwize=True,
+                        n_subdivisions=1,
+                        context=context)
 
                 # Add bevel object
                 path.data.bevel_object = circle
@@ -392,16 +394,16 @@ def make_conductor(length, conductor_radius, strand_radius, strand_pitch,
                    material, context):
     # Solid conductor
     if conductor_radius == strand_radius or rco.about_eq(strand_radius, 0.0):
-        conductor = make_solid_conductor(length=length,
-                                         radius=conductor_radius,
-                                         context=context)
+        conductor = make_solid_conductor(
+            length=length, radius=conductor_radius, context=context)
     # Stranded conductor
     else:
-        conductor = make_stranded_conductor(length=length,
-                                            conductor_radius=conductor_radius,
-                                            pitch=strand_pitch,
-                                            strand_radius=strand_radius,
-                                            context=context)
+        conductor = make_stranded_conductor(
+            length=length,
+            conductor_radius=conductor_radius,
+            pitch=strand_pitch,
+            strand_radius=strand_radius,
+            context=context)
 
     conductor.active_material = cm.CONDUCTOR_MATERIALS[material]()
 
@@ -599,9 +601,9 @@ def make_mesh_straight_strand(length, radius, mesh_data):
                      mesh_data.verts[-ppr - 2], mesh_data.verts[-2]))
         # Create last side face
         if i > 0:
-            mesh_data.faces.new((mesh_data.verts[-ppr], mesh_data.verts[-1],
-                                 mesh_data.verts[-ppr - 1],
-                                 mesh_data.verts[-(ppr * 2)]))
+            mesh_data.faces.new(
+                (mesh_data.verts[-ppr], mesh_data.verts[-1],
+                 mesh_data.verts[-ppr - 1], mesh_data.verts[-(ppr * 2)]))
 
         # Create a surface on first and last circle
         if i == 0 or i == n_circles:
@@ -655,15 +657,15 @@ def make_mesh_bunched_strand(length,
 
             # Create side faces
             if j > 0 and i > 0:
-                mesh_data.faces.new((mesh_data.verts[-2], mesh_data.verts[-1],
-                                     mesh_data.verts[-ppr - 1],
-                                     mesh_data.verts[-ppr - 2]))
+                mesh_data.faces.new(
+                    (mesh_data.verts[-2], mesh_data.verts[-1],
+                     mesh_data.verts[-ppr - 1], mesh_data.verts[-ppr - 2]))
 
         # Create final side face
         if j > 0:
-            mesh_data.faces.new((mesh_data.verts[-ppr], mesh_data.verts[-1],
-                                 mesh_data.verts[-ppr - 1],
-                                 mesh_data.verts[-(ppr * 2)]))
+            mesh_data.faces.new(
+                (mesh_data.verts[-ppr], mesh_data.verts[-1],
+                 mesh_data.verts[-ppr - 1], mesh_data.verts[-(ppr * 2)]))
 
             # Create cap face for first and last circle
         if j == 0 or j == n_circles:
@@ -752,14 +754,15 @@ def make_mesh_conductor(length, conductor_radius, strand_radius, strand_pitch,
                         material):
     # Solid conductor
     if conductor_radius == strand_radius or rco.about_eq(strand_radius, 0.0):
-        conductor = make_solid_mesh_conductor(length=length,
-                                              radius=conductor_radius)
+        conductor = make_solid_mesh_conductor(
+            length=length, radius=conductor_radius)
     # Stranded conductor
     else:
-        conductor = make_stranded_mesh_conductor(length=length,
-                                                 radius=conductor_radius,
-                                                 pitch=strand_pitch,
-                                                 strand_radius=strand_radius)
+        conductor = make_stranded_mesh_conductor(
+            length=length,
+            radius=conductor_radius,
+            pitch=strand_pitch,
+            strand_radius=strand_radius)
 
     # Add modifiers
     es_mod = conductor.modifiers.new('EdgeSplit', type="EDGE_SPLIT")
@@ -798,7 +801,7 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
 
     # Create guide curve for curve modifier
     guide_curve = rco.make_bezier_helix(length, pitch, radius, clockwize, 1,
-                                    context)
+                                        context)
 
     # Create conductor
     hl = rco.helical_length(radius, pitch, length)
@@ -855,8 +858,8 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
     theta = 0.0
 
     for color_name in color_names:
-        guide_curve = make_bezier_helix(length, pitch, radius, clockwize, 1,
-                                        context)
+        guide_curve = rco.make_bezier_helix(length, pitch, radius, clockwize,
+                                            1, context)
         guide_curve.data.use_fill_caps = True
         guide_curve.data.twist_mode = 'Z_UP'
         helix_length = rco.helical_length(radius, pitch, length)
@@ -999,6 +1002,7 @@ def make_central_filler(length, outer_radius, inner_radius, material, context):
     filler.active_material = cm.INSULATOR_MATERIALS[material](color)
 
     return filler
+
 
 ## 
 # @brief Creates a mesh shell tube representing cable lapping
