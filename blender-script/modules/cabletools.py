@@ -212,7 +212,8 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         base_color = cm.INSULATOR_COLORS[color_name]
         profile = make_tube_section(outer_radius, inner_radius, context)
         line.data.bevel_object = profile
-        line.active_material = cm.INSULATOR_MATERIALS[material](base_color)
+        line.active_material = cm.INSULATOR_MATERIALS[material](base_color,
+                                                                outer_radius)
     # Striped insulator
     elif color_name in cm.STRIPE_TYPES.keys():  #Striped insulator
         stripe_data = cm.STRIPE_TYPES[color_name]
@@ -228,12 +229,13 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         stripe_prof.parent = stripe_line
 
         line.data.bevel_object = base_prof
-        line.active_material = cm.INSULATOR_MATERIALS[material](base_color)
+        line.active_material = cm.INSULATOR_MATERIALS[material](base_color,
+                                                                outer_radius)
         base_prof.parent = line
 
         stripe_line.data.bevel_object = stripe_prof
         stripe_line.active_material = cm.INSULATOR_MATERIALS[material](
-            stripe_color)
+            stripe_color, outer_radius)
         stripe_line.parent = line
     else:
         raise InputError("\"%s\" is not a valid colour:" % color_name)
@@ -874,7 +876,7 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
             guide_curve.data.bevel_object = base_profile
             color = cm.INSULATOR_COLORS[color_name]
             guide_curve.active_material = cm.INSULATOR_MATERIALS[material](
-                color)
+                color, outer_radius)
         # Striped insulator
         elif color_name in cm.STRIPE_TYPES.keys():
             stripe_data = cm.STRIPE_TYPES[color_name]
@@ -897,10 +899,10 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
 
             guide_curve.data.bevel_object = base_profile
             guide_curve.active_material = cm.INSULATOR_MATERIALS[material](
-                base_color)
+                base_color, outer_radius)
             stripe_curve.data.bevel_object = stripe_profile
             stripe_curve.active_material = cm.INSULATOR_MATERIALS[material](
-                stripe_color)
+                stripe_color, outer_radius)
         else:
             raise InputError("\"%s\" is not a valid colour name" % color[0])
 
@@ -999,7 +1001,8 @@ def make_central_filler(length, outer_radius, inner_radius, material, context):
     filler = rco.make_mesh_tube(outer_radius, inner_radius, length, context)
     filler.name = "Filler"
     color = cm.INSULATOR_COLORS["beige"]
-    filler.active_material = cm.INSULATOR_MATERIALS[material](color)
+    filler.active_material = cm.INSULATOR_MATERIALS[material](color,
+                                                              outer_radius)
 
     return filler
 
@@ -1019,7 +1022,7 @@ def make_lap(length, radius, material, context):
     lap.name = "Lap"
 
     # Add material
-    lap.active_material = cm.LAP_MATERIALS[material]()
+    lap.active_material = cm.LAP_MATERIALS[material](radius)
 
     # Add modifiers
     es_mod = lap.modifiers.new('EdgeSplit', type='EDGE_SPLIT')
