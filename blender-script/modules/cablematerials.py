@@ -3,6 +3,7 @@
 import bpy
 import os
 
+
 ## 
 # @brief Append material node group from blendfile
 # 
@@ -17,9 +18,9 @@ def append_nodegroup(
     # tip object_full_directory_path as str: "./materials.blend\\NodeTree\\"
     object_full_directory_path = folder_path + filename + "\\" + obj_type + "\\"
 
-    bpy.ops.wm.append(directory=object_full_directory_path,
-                      filename=obj_name,
-                      link=False)
+    bpy.ops.wm.append(
+        directory=object_full_directory_path, filename=obj_name, link=False)
+
 
 ## 
 # @brief General function to append an insulator material. Should not be called
@@ -66,10 +67,11 @@ def insulator_material(color, material_name, material_node_group_name,
 
 
 def pvc_insulator_material(color, object_radius=0.001):
-    material = insulator_material(color=color,
-                                  material_name='pvc_insulator_material',
-                                  material_node_group_name='plastic_pvc',
-                                  object_radius=object_radius)
+    material = insulator_material(
+        color=color,
+        material_name='pvc_insulator_material',
+        material_node_group_name='plastic_pvc',
+        object_radius=object_radius)
 
     #set viewport color
     material.diffuse_color = color
@@ -78,10 +80,11 @@ def pvc_insulator_material(color, object_radius=0.001):
 
 
 def pe_insulator_material(color, object_radius=0.001):
-    material = insulator_material(color=color,
-                                  material_name='pe_insulator_material',
-                                  material_node_group_name='plastic_pe',
-                                  object_radius=object_radius)
+    material = insulator_material(
+        color=color,
+        material_name='pe_insulator_material',
+        material_node_group_name='plastic_pe',
+        object_radius=object_radius)
 
     #set viewport color
     material.diffuse_color = color
@@ -90,10 +93,11 @@ def pe_insulator_material(color, object_radius=0.001):
 
 
 def pur_insulator_material(color, object_radius=0.001):
-    material = insulator_material(color=color,
-                                  material_name='pur_insulator_material',
-                                  material_node_group_name='plastic_pur',
-                                  object_radius=object_radius)
+    material = insulator_material(
+        color=color,
+        material_name='pur_insulator_material',
+        material_node_group_name='plastic_pur',
+        object_radius=object_radius)
 
     #set viewport color
     material.diffuse_color = color
@@ -102,10 +106,11 @@ def pur_insulator_material(color, object_radius=0.001):
 
 
 def epd_insulator_material(color, object_radius=0.001):
-    material = insulator_material(color=color,
-                                  material_name='epd_insulator_material',
-                                  material_node_group_name='plastic_epd',
-                                  object_radius=object_radius)
+    material = insulator_material(
+        color=color,
+        material_name='epd_insulator_material',
+        material_node_group_name='plastic_epd',
+        object_radius=object_radius)
 
     #set viewport color
     material.diffuse_color = color
@@ -114,10 +119,11 @@ def epd_insulator_material(color, object_radius=0.001):
 
 
 def fill_insulator_material(color, object_radius=0.001):
-    material = insulator_material(color=color,
-                                  material_name='fill_insulator_material',
-                                  material_node_group_name='plastic_fill',
-                                  object_radius=object_radius)
+    material = insulator_material(
+        color=color,
+        material_name='fill_insulator_material',
+        material_node_group_name='plastic_fill',
+        object_radius=object_radius)
 
     #set viewport color
     material.diffuse_color = color
@@ -126,10 +132,11 @@ def fill_insulator_material(color, object_radius=0.001):
 
 
 def fill_rope_material(color, object_radius=0.001):
-    material = insulator_material(color=color,
-                                  material_name='fill_rope_material',
-                                  material_node_group_name='plastic_fill_rope',
-                                  object_radius=object_radius)
+    material = insulator_material(
+        color=color,
+        material_name='fill_rope_material',
+        material_node_group_name='plastic_fill_rope',
+        object_radius=object_radius)
 
     #set viewport color
     material.diffuse_color = color
@@ -226,25 +233,22 @@ def lap_material(material_name, material_node_group_name, object_radius):
 
 
 def nylon_lap_material(object_radius=0.001):
-    material = lap_material('lap_nylon',
-                            'lap_nylon',
-                            object_radius=object_radius)
+    material = lap_material(
+        'lap_nylon', 'lap_nylon', object_radius=object_radius)
     material.diffuse_color = LAP_COLORS['nylon']
     return material
 
 
 def chrome_lap_material(object_radius=0.001):
-    material = lap_material('lap_chrome',
-                            'lap_chrome-2-sided',
-                            object_radius=object_radius)
+    material = lap_material(
+        'lap_chrome', 'lap_chrome-2-sided', object_radius=object_radius)
     material.diffuse_color = LAP_COLORS['chrome']
     return material
 
 
 def plastic_lap_material(object_radius=0.001):
-    material = lap_material('lap_plastic',
-                            'lap_plastic',
-                            object_radius=object_radius)
+    material = lap_material(
+        'lap_plastic', 'lap_plastic', object_radius=object_radius)
     material.diffuse_color = LAP_COLORS['plastic']
     return material
 
@@ -305,5 +309,8 @@ STRIPE_TYPES = {
     (INSULATOR_COLORS['white'], INSULATOR_COLORS['green'], 0.5, False),
     'd-orange':
     (INSULATOR_COLORS['white'], INSULATOR_COLORS['orange'], 0.5, False),
-    'd-pink': (INSULATOR_COLORS['white'], INSULATOR_COLORS['pink'], 0.5, False)
+    'd-pink':
+    (INSULATOR_COLORS['white'], INSULATOR_COLORS['pink'], 0.5, False),
+    'ye/red_50/50': (INSULATOR_COLORS['yellow'], INSULATOR_COLORS['red'], 0.5,
+                     True)
 }
