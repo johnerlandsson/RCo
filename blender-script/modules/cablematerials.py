@@ -280,6 +280,7 @@ INSULATOR_COLORS = {'red': (0.549, 0.002, 0.009),
                     'white': (0.8, 0.8, 0.8),
                     'grey': (0.173, 0.173, 0.173),
                     'orange': (0.8, 0.136, 0.019),
+                    'purple': (0.339, 0.044, 0.549),
                     'yellow': (0.532, 0.549, 0.004)}
 
 CONDUCTOR_COLORS = {'copper': (0.603, 0.093, 0.0),
@@ -312,5 +313,7 @@ STRIPE_TYPES = {
     'd-pink':
     (INSULATOR_COLORS['white'], INSULATOR_COLORS['pink'], 0.5, False),
     'ye/red_50/50': (INSULATOR_COLORS['yellow'], INSULATOR_COLORS['red'], 0.5,
-                     True)
+                     True),
+    'gr/purp_90/10': (INSULATOR_COLORS['green'], INSULATOR_COLORS['purple'],
+                      0.1, False)
 }
