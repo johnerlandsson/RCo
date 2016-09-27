@@ -214,6 +214,8 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         line.data.bevel_object = profile
         line.active_material = cm.INSULATOR_MATERIALS[material](base_color,
                                                                 outer_radius)
+        profile.hide = True
+        profile.parent = line
     # Striped insulator
     elif color_name in cm.STRIPE_TYPES.keys():  #Striped insulator
         stripe_data = cm.STRIPE_TYPES[color_name]
@@ -227,11 +229,13 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
         stripe_line = bpy.data.objects.new('Stripe', line.data.copy())
         context.scene.objects.link(stripe_line)
         stripe_prof.parent = stripe_line
+        stripe_prof.hide = True
 
         line.data.bevel_object = base_prof
         line.active_material = cm.INSULATOR_MATERIALS[material](base_color,
                                                                 outer_radius)
         base_prof.parent = line
+        base_prof.hide = True
 
         stripe_line.data.bevel_object = stripe_prof
         stripe_line.active_material = cm.INSULATOR_MATERIALS[material](
@@ -288,7 +292,6 @@ def strand_positions(conductor_radius, strand_radius):
 # @return The new object
 def make_solid_conductor(length, radius, context):
     circle = rco.make_bezier_circle(radius, context)
-    circle.layers = rco.JUNK_LAYER
 
     line = rco.make_line((0, 0, 0), (0, 0, length), math.floor(length * 200.0),
                          context)
@@ -297,6 +300,7 @@ def make_solid_conductor(length, radius, context):
     line.data.use_fill_caps = True
 
     circle.parent = line
+    circle.hide = True
 
     context.scene.objects.active = line
 
@@ -318,7 +322,6 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 
     #Create a circle to be used as a bevel object
     circle = rco.make_bezier_circle(strand_radius, context)
-    circle.layers = rco.JUNK_LAYER
 
     #Create progress indicator
     wm = bpy.context.window_manager
@@ -379,6 +382,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
     ret = rco.join_objects(strands, context)
     ret.name = "Conductor"
     circle.parent = ret
+    circle.hide = True
 
     wm.progress_end()
 
@@ -567,6 +571,8 @@ def make_braid(length, radius, bundle_size, n_bundle_pairs, pitch,
 
     ret = rco.join_objects(strands, context)
     ret.name = "Braid"
+    strand_profile.parent = ret
+    strand_profile.hide = True
 
     ret.active_material = cm.CONDUCTOR_MATERIALS[material]()
 
@@ -677,13 +683,13 @@ def make_mesh_bunched_strand(length,
             mesh_data.faces.new(cap_face)
 
 
-            ## Creates a mesh object representing a bunched set of strands
-            # 
-            # @param length Axial length of the conductor
-            # @param radius Conductor radius
-            # @param pitch Number of revolutions per length unit
-            # @param strand_radius Radius of individual strands
-            # @return The new object
+## Creates a mesh object representing a bunched set of strands
+# 
+# @param length Axial length of the conductor
+# @param radius Conductor radius
+# @param pitch Number of revolutions per length unit
+# @param strand_radius Radius of individual strands
+# @return The new object
 def make_stranded_mesh_conductor(length, radius, pitch, strand_radius):
     bm = bmesh.new()
     obj = bpy.data.objects.new("Conductor",
@@ -801,6 +807,10 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
     if n_conductors < 1:
         return None
 
+    # Create empty base object
+    ret = bpy.data.objects.new("ConductorArray", None)
+    context.scene.objects.link(ret)
+
     # Create guide curve for curve modifier
     guide_curve = rco.make_bezier_helix(length, pitch, radius, clockwize, 1,
                                         context)
@@ -809,6 +819,7 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
     hl = rco.helical_length(radius, pitch, length)
     conductor = make_mesh_conductor(hl, conductor_radius, strand_radius,
                                     strand_pitch, material)
+    conductor.parent = ret
 
     #Apply edge split modifier
     bpy.ops.object.modifier_apply(apply_as='DATA', modifier="EdgeSplit")
@@ -831,11 +842,11 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
         ob_new = rco.deep_link_object(conductor, context)
         ob_new.rotation_euler = (0, 0, theta)
         conductors.append(ob_new)
-        ob_new.parent = conductor
+        ob_new.parent = ret
 
         theta += dtheta
 
-    return conductor
+    return ret
 
 
 ## Creates a circular array of insulators
@@ -853,7 +864,10 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
 # @return The new object
 def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
                          material, colors, clockwize, peel_length, context):
-    ret = None
+    # Create empty base object
+    ret = bpy.data.objects.new("InsulatorArray", None)
+    context.scene.objects.link(ret)
+
     color_names = colors.split()
 
     dtheta = (2.0 * math.pi) / len(color_names)
@@ -871,8 +885,8 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
         if color_name in cm.INSULATOR_COLORS.keys():
             base_profile = make_tube_section(outer_radius, inner_radius,
                                              context)
-            base_profile.layers = rco.JUNK_LAYER
             base_profile.parent = guide_curve
+            base_profile.hide = True
             guide_curve.data.bevel_object = base_profile
             color = cm.INSULATOR_COLORS[color_name]
             guide_curve.active_material = cm.INSULATOR_MATERIALS[material](
@@ -891,11 +905,15 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
             # Make a copy of the guide curve for our stripe
             stripe_curve = bpy.data.objects.new('StripeCurve',
                                                 guide_curve.data.copy())
+            stripe_curve.parent = ret
+            stripe_curve.name = 'InsulatorStripe'
             context.scene.objects.link(stripe_curve)
-            stripe_curve.parent = guide_curve
+            stripe_curve.parent = ret
 
             stripe_profile.parent = stripe_curve
+            stripe_profile.hide = True
             base_profile.parent = guide_curve
+            base_profile.hide = True
 
             guide_curve.data.bevel_object = base_profile
             guide_curve.active_material = cm.INSULATOR_MATERIALS[material](
@@ -909,12 +927,8 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
         guide_curve.rotation_euler = (0, 0, theta)
         theta += dtheta
 
-        if ret == None:
-            ret = guide_curve
-        else:
-            guide_curve.parent = ret
-
-    ret.name = "InsulatorArray"
+        guide_curve.parent = ret
+        guide_curve.name = 'Insulator'
 
     return ret
 
@@ -945,18 +959,21 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius,
 
     n_parts = len(ins_colors.split())
 
+    # Create empty base object
+    ret = bpy.data.objects.new("PartArray", None)
+    context.scene.objects.link(ret)
+
+
     cond_arr = make_conductor_array(
         length, pitch, radius, cond_radius, cond_strand_pitch, cond_material,
         cond_strand_radius, clockwize, n_parts, context)
+    cond_arr.parent = ret
     ins_arr = make_insulator_array(length, pitch, radius, ins_outer_radius,
                                    ins_inner_radius, ins_material, ins_colors,
                                    clockwize, ins_peel_length, context)
+    ins_arr.parent = ret
 
-    cond_arr.parent = ins_arr
-
-    ins_arr.name = "PartArray"
-
-    return ins_arr
+    return ret
 
 
 ## 
@@ -977,14 +994,19 @@ def make_part_array(length, pitch, radius, clockwize, ins_outer_radius,
 def make_part(length, ins_radius, ins_color, ins_material, peel_length,
               cond_radius, cond_material, strand_radius, strand_pitch,
               context):
+    # Create empty base object
+    ret = bpy.data.objects.new("Part", None)
+    context.scene.objects.link(ret)
+
     insulator = make_insulator(cond_radius, ins_radius, length, peel_length,
                                ins_material, ins_color, context)
+    insulator.parent = ret
+
     conductor = make_mesh_conductor(length, cond_radius, strand_radius,
                                     strand_pitch, cond_material)
-    conductor.parent = insulator
-    insulator.name = "Part"
+    conductor.parent = ret
 
-    return insulator
+    return ret
 
 
 ## 
