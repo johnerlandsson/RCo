@@ -67,8 +67,9 @@ def make_bezier_circle(radius, context):
     curveData = bpy.data.curves.new('CircleCurve', type='CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 1
-    curveData.render_resolution_u = 7
+    curveData.render_resolution_u = 12
     curveData.use_fill_caps = False
+    curveData.use_radius = True
 
     polyline = curveData.splines.new('BEZIER')
     polyline.use_cyclic_u = True
@@ -114,6 +115,7 @@ def make_line(p1, p2, n_subdiv, context):
 
     curveData = bpy.data.curves.new('Line', type='CURVE')
     curveData.dimensions = '3D'
+    curveData.use_radius = True
 
     objectData = bpy.data.objects.new("Line", curveData)
     objectData.location = (0, 0, 0)
@@ -164,44 +166,40 @@ def about_eq(a, b):
         return True
     return False
 
-## Returns a bezier curve in the shape of a spiral
-# @param length Total length in Z-axis
-# @param pitch Number of revolutions per length unit
-# @param radius Radius of helix
-# @param context context in wich to create the helix
-# @return The new object
-def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions,
-                      context):
-    #Calculate limits
-    if about_eq(pitch, 0.0):
-        return make_line((0, 0, 0), (0, 0, length), 200.0 * length, context)
+## 
+# @brief Helper function for make_bezier_helix
+# 
+# @param length
+# @param pitch
+# @param radius
+# @param clockwize
+# @param start_angle
+# 
+# @return 
+def make_bezier_helix_data(length, pitch, radius, clockwize, start_angle):
+    n_points = math.floor(length * pitch * 4)
 
-    if about_eq(length, 0.0):
-        raise InputError("Length is zero")
-    elif n_subdivisions < 1:
-        raise InputError("n_subdivisions is zero")
+# Need at least 3 points to make a helix
+    if n_points < 4:
+        n_points = 3
 
-    points_per_rev = 4.0 * n_subdivisions
-    n_points = math.floor(length * pitch * points_per_rev)
-
-    #Create a Bezier curve object
     curveData = bpy.data.curves.new('HelixCurve', type='CURVE')
     curveData.dimensions = '3D'
-    curveData.resolution_u = 1
-    curveData.render_resolution_u = 5
-    curveData.use_fill_caps = True
+    curveData.use_radius = True
     polyline = curveData.splines.new('BEZIER')
     polyline.bezier_points.add(n_points)
 
-    dtheta = (2.0 * math.pi) / points_per_rev
+    dtheta = (2.0 * math.pi * pitch * length) / n_points
+
     if clockwize:
-        dtheta *= -1
-    handle_length = (4.0 / 3.0) * math.tan(math.pi / (2.0 * (
-        (2.0 * math.pi) / dtheta))) * radius
+        dtheta = -dtheta 
+
+    handle_length = (4.0/3.0) * math.tan(math.pi/(2.0 * 4))
+
     handle_radius = math.sqrt(radius**2 + handle_length**2)
     htheta = math.acos(radius / handle_radius)
 
-    dz = (length / (length * pitch * 2 * math.pi)) * htheta
+    dz = length / n_points
 
     for i in range(n_points + 1):
         z = length - (length * (i / n_points))
@@ -212,11 +210,11 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions,
         if clockwize:
             handle_b = polyline.bezier_points[i].handle_left
             handle_a = polyline.bezier_points[i].handle_right
-            tmpdz = dz * -1.0
+            tmpdz = -(dz / 2.0)
         else:
             handle_a = polyline.bezier_points[i].handle_left
             handle_b = polyline.bezier_points[i].handle_right
-            tmpdz = dz
+            tmpdz = dz / 2.0
 
         handle_a[0] = handle_radius * math.cos((dtheta * i) - htheta)
         handle_a[1] = handle_radius * math.sin((dtheta * i) - htheta)
@@ -226,11 +224,101 @@ def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions,
         handle_b[1] = handle_radius * math.sin((dtheta * i) + htheta)
         handle_b[2] = z - tmpdz
 
+    return curveData
+
+def make_bezier_helix(length, pitch, radius, clockwize, context):
+    #Calculate limits
+    if about_eq(pitch, 0.0):
+        return make_line((0, 0, 0), (0, 0, length), 200.0 * length, context)
+
+    if about_eq(length, 0.0):
+        raise InputError("Length is zero")
+
+    #Create a Bezier curve object
+    curveData = make_bezier_helix_data(length=length, 
+                                       pitch=pitch, 
+                                       radius=radius, 
+                                       clockwize=clockwize, 
+                                       start_angle=0)
+    curveData.resolution_u = 5
+    curveData.render_resolution_u = 12
+    curveData.use_fill_caps = True
+
     ret = bpy.data.objects.new('Helix', curveData)
     context.scene.objects.link(ret)
     context.scene.objects.active = ret
 
     return ret
+
+
+## Returns a bezier curve in the shape of a spiral
+# @param length Total length in Z-axis
+# @param pitch Number of revolutions per length unit
+# @param radius Radius of helix
+# @param context context in wich to create the helix
+# @return The new object
+#def make_bezier_helix(length, pitch, radius, clockwize, n_subdivisions,
+                      #context):
+    ##Calculate limits
+    #if about_eq(pitch, 0.0):
+        #return make_line((0, 0, 0), (0, 0, length), 200.0 * length, context)
+
+    #if about_eq(length, 0.0):
+        #raise InputError("Length is zero")
+    #elif n_subdivisions < 1:
+        #raise InputError("n_subdivisions is zero")
+
+    #points_per_rev = 4.0 * n_subdivisions
+    #n_points = math.floor(length * pitch * points_per_rev)
+
+    ##Create a Bezier curve object
+    #curveData = bpy.data.curves.new('HelixCurve', type='CURVE')
+    #curveData.dimensions = '3D'
+    #curveData.resolution_u = 1
+    #curveData.render_resolution_u = 5
+    #curveData.use_fill_caps = True
+    #curveData.use_radius = True
+    #polyline = curveData.splines.new('BEZIER')
+    #polyline.bezier_points.add(n_points)
+
+    #dtheta = (2.0 * math.pi) / points_per_rev
+    #if clockwize:
+        #dtheta *= -1
+    #handle_length = (4.0 / 3.0) * math.tan(math.pi / (2.0 * (
+        #(2.0 * math.pi) / dtheta))) * radius
+    #handle_radius = math.sqrt(radius**2 + handle_length**2)
+    #htheta = math.acos(radius / handle_radius)
+
+    #dz = (length / (length * pitch * 2 * math.pi)) * htheta
+
+    #for i in range(n_points + 1):
+        #z = length - (length * (i / n_points))
+        #polyline.bezier_points[i].co[0] = radius * math.cos(dtheta * i)
+        #polyline.bezier_points[i].co[1] = radius * math.sin(dtheta * i)
+        #polyline.bezier_points[i].co[2] = z
+
+        #if clockwize:
+            #handle_b = polyline.bezier_points[i].handle_left
+            #handle_a = polyline.bezier_points[i].handle_right
+            #tmpdz = dz * -1.0
+        #else:
+            #handle_a = polyline.bezier_points[i].handle_left
+            #handle_b = polyline.bezier_points[i].handle_right
+            #tmpdz = dz
+
+        #handle_a[0] = handle_radius * math.cos((dtheta * i) - htheta)
+        #handle_a[1] = handle_radius * math.sin((dtheta * i) - htheta)
+        #handle_a[2] = z + tmpdz
+
+        #handle_b[0] = handle_radius * math.cos((dtheta * i) + htheta)
+        #handle_b[1] = handle_radius * math.sin((dtheta * i) + htheta)
+        #handle_b[2] = z - tmpdz
+
+    #ret = bpy.data.objects.new('Helix', curveData)
+    #context.scene.objects.link(ret)
+    #context.scene.objects.active = ret
+
+    #return ret
 
 ## Calculate the length of a helix
 # @param radius Radius of the helix
