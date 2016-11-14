@@ -56,7 +56,7 @@ def make_tube_section_slice(outer_radius, inner_radius, amount, mirror,
     curveData = bpy.data.curves.new('StripedTubeSection', type='CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 1
-    curveData.render_resolution_u = 2
+    curveData.render_resolution_u = 12
     curveData.use_fill_caps = False
 
     polyline = curveData.splines.new('BEZIER')
@@ -354,7 +354,6 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                         pitch=pitch,
                         radius=r,
                         clockwize=True,
-                        n_subdivisions=1,
                         context=context)
 
                 # Add bevel object
@@ -451,8 +450,9 @@ def make_braid_strand(length, radius, pitch, points_per_rev, strand_radius,
     curveData = bpy.data.curves.new('HelixCurve', type='CURVE')
     curveData.dimensions = '3D'
     curveData.resolution_u = 1
-    curveData.render_resolution_u = 3
+    curveData.render_resolution_u = 10
     curveData.use_fill_caps = True
+    curveData.use_radius = True
     polyline = curveData.splines.new('BEZIER')
     polyline.bezier_points.add(n_points)
 
@@ -812,7 +812,7 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
     context.scene.objects.link(ret)
 
     # Create guide curve for curve modifier
-    guide_curve = rco.make_bezier_helix(length, pitch, radius, clockwize, 1,
+    guide_curve = rco.make_bezier_helix(length, pitch, radius, clockwize, 
                                         context)
 
     # Create conductor
@@ -875,7 +875,7 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
 
     for color_name in color_names:
         guide_curve = rco.make_bezier_helix(length, pitch, radius, clockwize,
-                                            1, context)
+                                            context)
         guide_curve.data.use_fill_caps = True
         guide_curve.data.twist_mode = 'Z_UP'
         helix_length = rco.helical_length(radius, pitch, length)
@@ -1054,3 +1054,59 @@ def make_lap(length, radius, material, context):
     ss_mod.render_levels = 2
 
     return lap
+
+
+## 
+# @brief 
+# 
+# @param length
+# @param radius
+# @param strand_radius
+# @param n_strands
+# @param pitch
+# @param clockwize
+# @param material
+# @param context
+# 
+# @return 
+def make_armour(length, radius, strand_radius, n_strands, pitch, clockwize,
+                material, context):
+
+    #Calculate limits
+    if rco.about_eq(pitch, 0.0):
+        return make_line((0, 0, 0), (0, 0, length), 200.0 * length, context)
+
+    if rco.about_eq(length, 0.0):
+        raise InputError("Length is zero")
+
+    #Create a Bezier curve object
+    curveData = bpy.data.curves.new('HelixCurve', type='CURVE')
+    curveData.dimensions = '3D'
+    curveData.use_radius = True
+
+    dtheta = (2.0 * math.pi) / n_strands
+
+    for i in range(n_strands):
+        polylines = rco.make_bezier_helix_data(length=length, 
+                                           pitch=pitch, 
+                                           radius=radius, 
+                                           clockwize=clockwize, 
+                                           start_angle=i * dtheta,
+                                           curve_data=curveData)
+    curveData.resolution_u = 5
+    curveData.render_resolution_u = 12
+    curveData.use_fill_caps = True
+    ret = bpy.data.objects.new('Armour', curveData)
+
+    circle = rco.make_bezier_circle(strand_radius, context)
+    circle.parent = ret
+    curveData.bevel_object = circle
+
+
+    context.scene.objects.link(ret)
+    context.scene.objects.active = ret
+
+    ret.active_material = cm.CONDUCTOR_MATERIALS[material]()
+
+    return ret
+
