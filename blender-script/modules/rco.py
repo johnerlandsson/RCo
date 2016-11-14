@@ -176,20 +176,17 @@ def about_eq(a, b, precision=0.000001):
 # @param start_angle
 # 
 # @return 
-def make_bezier_helix_data(length, pitch, radius, clockwize, start_angle):
-    curveData = bpy.data.curves.new('HelixCurve', type='CURVE')
-    curveData.dimensions = '3D'
-    curveData.use_radius = True
-    polyline = curveData.splines.new('BEZIER')
+def make_bezier_helix_data(length, pitch, radius, clockwize, start_angle,
+                           curve_data):
+    polyline = curve_data.splines.new('BEZIER')
 
     n_points = math.floor(length * pitch * 4)
 
 # Need at least 3 points to make a helix
     if n_points < 3:
         n_points = 3
-        dtheta = (2.0 * math.pi * pitch) / 3
-    else:
-        dtheta = (2.0 * math.pi * pitch * length) / (n_points)
+
+    dtheta = (2.0 * math.pi * pitch * length) / (n_points - 1)
 
     polyline.bezier_points.add(n_points -1)
 
@@ -228,7 +225,7 @@ def make_bezier_helix_data(length, pitch, radius, clockwize, start_angle):
         handle_b[1] = handle_radius * math.sin(start_angle + (dtheta * i) + htheta)
         handle_b[2] = z - tmpdz
 
-    return curveData
+    return polyline
 
 ## 
 # @brief 
@@ -249,11 +246,16 @@ def make_bezier_helix(length, pitch, radius, clockwize, context):
         raise InputError("Length is zero")
 
     #Create a Bezier curve object
-    curveData = make_bezier_helix_data(length=length, 
+    curveData = bpy.data.curves.new('HelixCurve', type='CURVE')
+    curveData.dimensions = '3D'
+    curveData.use_radius = True
+
+    polylines = make_bezier_helix_data(length=length, 
                                        pitch=pitch, 
                                        radius=radius, 
                                        clockwize=clockwize, 
-                                       start_angle=0)
+                                       start_angle=0,
+                                       curve_data=curveData)
     curveData.resolution_u = 5
     curveData.render_resolution_u = 12
     curveData.use_fill_caps = True
