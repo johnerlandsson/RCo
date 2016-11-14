@@ -1102,7 +1102,6 @@ def make_armour(length, radius, strand_radius, n_strands, pitch, clockwize,
     circle.parent = ret
     curveData.bevel_object = circle
 
-
     context.scene.objects.link(ret)
     context.scene.objects.active = ret
 
