@@ -161,8 +161,8 @@ def rotate_point_xy(p, angle):
 # @param a A float variable
 # @param b A float variable to compare with
 # @return True if a and b are equal
-def about_eq(a, b):
-    if a + 0.000001 > b and a - 0.000001 < b:
+def about_eq(a, b, precision=0.000001):
+    if a + precision > b and a - precision < b:
         return True
     return False
 
