@@ -177,34 +177,38 @@ def about_eq(a, b):
 # 
 # @return 
 def make_bezier_helix_data(length, pitch, radius, clockwize, start_angle):
-    n_points = math.floor(length * pitch * 4)
-
-# Need at least 3 points to make a helix
-    if n_points < 4:
-        n_points = 3
-
     curveData = bpy.data.curves.new('HelixCurve', type='CURVE')
     curveData.dimensions = '3D'
     curveData.use_radius = True
     polyline = curveData.splines.new('BEZIER')
-    polyline.bezier_points.add(n_points)
 
-    dtheta = (2.0 * math.pi * pitch * length) / n_points
+    n_points = math.floor(length * pitch * 4)
+
+# Need at least 3 points to make a helix
+    if n_points < 3:
+        n_points = 3
+        dtheta = (2.0 * math.pi * pitch) / 3
+    else:
+        dtheta = (2.0 * math.pi * pitch * length) / (n_points)
+
+    polyline.bezier_points.add(n_points -1)
+
+    ppr = (2.0 * math.pi) / dtheta
 
     if clockwize:
         dtheta = -dtheta 
 
-    handle_length = (4.0/3.0) * math.tan(math.pi/(2.0 * 4))
+    handle_length = radius * (4.0/3.0) * math.tan(math.pi/(2.0 * ppr))
 
     handle_radius = math.sqrt(radius**2 + handle_length**2)
     htheta = math.acos(radius / handle_radius)
 
-    dz = length / n_points
+    dz = length / (n_points)
 
-    for i in range(n_points + 1):
-        z = length - (length * (i / n_points))
-        polyline.bezier_points[i].co[0] = radius * math.cos(dtheta * i)
-        polyline.bezier_points[i].co[1] = radius * math.sin(dtheta * i)
+    for i in range(n_points):
+        z = length - (length * (i / (n_points - 1)))
+        polyline.bezier_points[i].co[0] = radius * math.cos(start_angle + dtheta * i)
+        polyline.bezier_points[i].co[1] = radius * math.sin(start_angle + dtheta * i)
         polyline.bezier_points[i].co[2] = z
 
         if clockwize:
@@ -216,16 +220,26 @@ def make_bezier_helix_data(length, pitch, radius, clockwize, start_angle):
             handle_b = polyline.bezier_points[i].handle_right
             tmpdz = dz / 2.0
 
-        handle_a[0] = handle_radius * math.cos((dtheta * i) - htheta)
-        handle_a[1] = handle_radius * math.sin((dtheta * i) - htheta)
+        handle_a[0] = handle_radius * math.cos(start_angle + (dtheta * i) - htheta)
+        handle_a[1] = handle_radius * math.sin(start_angle + (dtheta * i) - htheta)
         handle_a[2] = z + tmpdz
 
-        handle_b[0] = handle_radius * math.cos((dtheta * i) + htheta)
-        handle_b[1] = handle_radius * math.sin((dtheta * i) + htheta)
+        handle_b[0] = handle_radius * math.cos(start_angle + (dtheta * i) + htheta)
+        handle_b[1] = handle_radius * math.sin(start_angle + (dtheta * i) + htheta)
         handle_b[2] = z - tmpdz
 
     return curveData
 
+## 
+# @brief 
+# 
+# @param length
+# @param pitch
+# @param radius
+# @param clockwize
+# @param context
+# 
+# @return 
 def make_bezier_helix(length, pitch, radius, clockwize, context):
     #Calculate limits
     if about_eq(pitch, 0.0):
