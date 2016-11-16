@@ -265,7 +265,7 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
             stripe_color, outer_radius)
         stripe_line.parent = line
     else:
-        raise InputError("\"%s\" is not a valid colour:" % color_name)
+        raise rco.InputError("\"%s\" is not a valid colour:" % color_name)
 
     return line
 
@@ -946,7 +946,7 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
             stripe_curve.active_material = cm.INSULATOR_MATERIALS[material](
                 stripe_color, outer_radius)
         else:
-            raise InputError("\"%s\" is not a valid colour name" % color[0])
+            raise rco.InputError("\"%s\" is not a valid colour name" % color[0])
 
         guide_curve.rotation_euler = (0, 0, theta)
         theta += dtheta
@@ -1101,7 +1101,7 @@ def make_armour(length, radius, strand_radius, n_strands, pitch, clockwize,
         return make_line((0, 0, 0), (0, 0, length), 200.0 * length, context)
 
     if rco.about_eq(length, 0.0):
-        raise InputError("Length is zero")
+        raise rco.InputError("Length is zero")
 
     #Create a Bezier curve object
     curveData = bpy.data.curves.new('HelixCurve', type='CURVE')
