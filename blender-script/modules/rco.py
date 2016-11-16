@@ -56,21 +56,14 @@ def join_objects(objects, context):
 
     return context.active_object
 
-## Creates a circle object using bezier curve
-# @param radius Circle radius
-# @param context Context in which to create the circle
-# @return The circle object
-def make_bezier_circle(radius, context):
-    if radius <= 0:
-        raise InputError("Invalid radius")
-
-    curveData = bpy.data.curves.new('CircleCurve', type='CURVE')
-    curveData.dimensions = '3D'
-    curveData.resolution_u = 1
-    curveData.render_resolution_u = 12
-    curveData.use_fill_caps = False
-    curveData.use_radius = True
-
+## 
+# @brief 
+# 
+# @param radius
+# @param curveData
+# 
+# @return 
+def make_bezier_circle_data(radius, curveData):
     polyline = curveData.splines.new('BEZIER')
     polyline.use_cyclic_u = True
     polyline.bezier_points.add(3)
@@ -93,6 +86,29 @@ def make_bezier_circle(radius, context):
                                                                   - htheta)
         polyline.bezier_points[i].handle_right[1] = hh * math.sin((-dtheta * i)
                                                                   - htheta)
+
+    return polyline
+
+## 
+# @brief Creates a circle object using bezier curve
+# 
+# @param radius Circle radius
+# @param context Context in which to create the circle
+# 
+# @return The circle object
+def make_bezier_circle(radius, context):
+    if radius <= 0:
+        raise InputError("Invalid radius")
+
+    curveData = bpy.data.curves.new('CircleCurve', type='CURVE')
+    curveData.dimensions = '3D'
+    curveData.resolution_u = 5
+    curveData.render_resolution_u = 12
+    curveData.use_fill_caps = False
+    curveData.use_radius = True
+
+    polyline = make_bezier_circle_data(radius, curveData)
+    
 
     ret = bpy.data.objects.new('Circle', curveData)
     context.scene.objects.link(ret)

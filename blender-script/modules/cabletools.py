@@ -23,10 +23,13 @@ for k in cm.STRIPE_TYPES:
     INSULATOR_COLORS.append((k, k, k))
 
 
-## Creates two joined circles
+## 
+# @brief Creates two joined circles
+# 
 # @param outer_radius Radius of the outer circle
 # @param inner_radius Radius of the inner circle
 # @param context Context in which to create it
+# 
 # @return The new object
 def make_tube_section(outer_radius, inner_radius, context):
     if outer_radius <= 0.0:
@@ -34,16 +37,22 @@ def make_tube_section(outer_radius, inner_radius, context):
     elif inner_radius <= 0.0:
         raise InputError("Invalid inner radius")
 
-    # Create circles
-    outer_circle = rco.make_bezier_circle(outer_radius, context)
-    inner_circle = rco.make_bezier_circle(inner_radius, context)
 
-    # Join circles
-    ret = rco.join_objects([outer_circle, inner_circle], context)
-    ret.name = "TubeSection"
+    curveData = bpy.data.curves.new('TubeSectionCurve', type='CURVE')
+    curveData.dimensions = '3D'
+    curveData.resolution_u = 5
+    curveData.render_resolution_u = 12
+    curveData.use_fill_caps = False
+    curveData.use_radius = True
+
+    polylineOuter = rco.make_bezier_circle_data(outer_radius, curveData)
+    polylineInner = rco.make_bezier_circle_data(inner_radius, curveData)
+
+    ret = bpy.data.objects.new('TubeSection', curveData)
+    context.scene.objects.link(ret)
+    context.scene.objects.active = ret
 
     return ret
-
 
 ## Creates part of a tube section. To be used for striped insulators
 # @param outer_radius Radius of the outer circle
