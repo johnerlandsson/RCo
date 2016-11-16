@@ -56,7 +56,7 @@ class MakeInsulator(bpy.types.Operator):
         material = scene.CT_make_insulator_material
         color_name = scene.CT_make_insulator_color_name
 
-        ct.make_insulator(outer_radius, inner_radius, length, 0.0, material,
+        ct.make_insulator(inner_radius, outer_radius, length, 0.0, material,
                 color_name, context)
 
         return {'FINISHED'}

@@ -23,54 +23,22 @@ for k in cm.STRIPE_TYPES:
     INSULATOR_COLORS.append((k, k, k))
 
 
+
 ## 
-# @brief Creates two joined circles
+# @brief 
 # 
-# @param outer_radius Radius of the outer circle
-# @param inner_radius Radius of the inner circle
-# @param context Context in which to create it
+# @param outer_radius
+# @param inner_radius
+# @param amount
+# @param start_angle
+# @param curveData
 # 
-# @return The new object
-def make_tube_section(outer_radius, inner_radius, context):
-    if outer_radius <= 0.0:
-        raise InputError("Invalid outer radius")
-    elif inner_radius <= 0.0:
-        raise InputError("Invalid inner radius")
-
-
-    curveData = bpy.data.curves.new('TubeSectionCurve', type='CURVE')
-    curveData.dimensions = '3D'
-    curveData.resolution_u = 5
-    curveData.render_resolution_u = 12
-    curveData.use_fill_caps = False
-    curveData.use_radius = True
-
-    polylineOuter = rco.make_bezier_circle_data(outer_radius, curveData)
-    polylineInner = rco.make_bezier_circle_data(inner_radius, curveData)
-
-    ret = bpy.data.objects.new('TubeSection', curveData)
-    context.scene.objects.link(ret)
-    context.scene.objects.active = ret
-
-    return ret
-
-## Creates part of a tube section. To be used for striped insulators
-# @param outer_radius Radius of the outer circle
-# @param inner_radius Radius of the inner circle
-# @param amount Amount of circumference to be used (0-1)
-# @param mirror Mirror the slice in X and Y directions
-# @return The new object
-def make_tube_section_slice(outer_radius, inner_radius, amount, mirror,
-                            context):
-    curveData = bpy.data.curves.new('StripedTubeSection', type='CURVE')
-    curveData.dimensions = '3D'
-    curveData.resolution_u = 1
-    curveData.render_resolution_u = 12
-    curveData.use_fill_caps = False
-
+# @return 
+def make_tube_section_slice_data(outer_radius, inner_radius, amount,
+                                 start_angle, curveData):
     polyline = curveData.splines.new('BEZIER')
     polyline.use_cyclic_u = True
-    polyline.bezier_points.add(5)
+    polyline.bezier_points.add(7)
 
     theta = 2.0 * math.pi * amount
     dtheta = theta / 2.0
@@ -83,65 +51,103 @@ def make_tube_section_slice(outer_radius, inner_radius, amount, mirror,
     handle_radius_s = math.sqrt(inner_radius**2 + handle_length_s**2)
     handle_theta = math.acos(outer_radius / handle_radius_l)
 
-    polyline.bezier_points[0].co[0] = outer_radius * math.cos(dtheta)
-    polyline.bezier_points[0].co[1] = outer_radius * math.sin(dtheta)
+    polyline.bezier_points[0].co[0] = outer_radius * math.cos(dtheta +
+                                                              start_angle)
+    polyline.bezier_points[0].co[1] = outer_radius * math.sin(dtheta +
+                                                              start_angle)
     polyline.bezier_points[0].handle_left = polyline.bezier_points[0].co
-    polyline.bezier_points[0].handle_right[0] = handle_radius_l * math.cos(
-        dtheta - handle_theta)
-    polyline.bezier_points[0].handle_right[1] = handle_radius_l * math.sin(
-        dtheta - handle_theta)
+    polyline.bezier_points[0].handle_right = polyline.bezier_points[0].co
 
-    polyline.bezier_points[1].co[0] = outer_radius * math.cos(0)
-    polyline.bezier_points[1].co[1] = outer_radius * math.sin(0)
-    polyline.bezier_points[1].handle_left[0] = handle_radius_l * math.cos(
-        handle_theta)
-    polyline.bezier_points[1].handle_left[1] = handle_radius_l * math.sin(
-        handle_theta)
+    polyline.bezier_points[1].co[0] = outer_radius * math.cos(dtheta +
+                                                              start_angle)
+    polyline.bezier_points[1].co[1] = outer_radius * math.sin(dtheta +
+                                                              start_angle)
+    polyline.bezier_points[1].handle_left = polyline.bezier_points[1].co
     polyline.bezier_points[1].handle_right[0] = handle_radius_l * math.cos(
-        -handle_theta)
+        dtheta - handle_theta + start_angle)
     polyline.bezier_points[1].handle_right[1] = handle_radius_l * math.sin(
-        -handle_theta)
+        dtheta - handle_theta + start_angle)
 
-    polyline.bezier_points[2].co[0] = outer_radius * math.cos(-dtheta)
-    polyline.bezier_points[2].co[1] = outer_radius * math.sin(-dtheta)
-    polyline.bezier_points[2].handle_right = polyline.bezier_points[2].co
+    polyline.bezier_points[2].co[0] = outer_radius * math.cos(start_angle)
+    polyline.bezier_points[2].co[1] = outer_radius * math.sin(start_angle)
     polyline.bezier_points[2].handle_left[0] = handle_radius_l * math.cos(
-        -dtheta + handle_theta)
+        handle_theta + start_angle)
     polyline.bezier_points[2].handle_left[1] = handle_radius_l * math.sin(
-        -dtheta + handle_theta)
+        handle_theta + start_angle)
+    polyline.bezier_points[2].handle_right[0] = handle_radius_l * math.cos(
+        -handle_theta + start_angle)
+    polyline.bezier_points[2].handle_right[1] = handle_radius_l * math.sin(
+        -handle_theta + start_angle)
 
-    polyline.bezier_points[3].co[0] = inner_radius * math.cos(-dtheta)
-    polyline.bezier_points[3].co[1] = inner_radius * math.sin(-dtheta)
-    polyline.bezier_points[3].handle_left = polyline.bezier_points[2].co
-    polyline.bezier_points[3].handle_right[0] = handle_radius_s * math.cos(
-        -dtheta + handle_theta)
-    polyline.bezier_points[3].handle_right[1] = handle_radius_s * math.sin(
-        -dtheta + handle_theta)
+    polyline.bezier_points[3].co[0] = outer_radius * math.cos(-dtheta +
+                                                              start_angle)
+    polyline.bezier_points[3].co[1] = outer_radius * math.sin(-dtheta +
+                                                              start_angle)
+    polyline.bezier_points[3].handle_right = polyline.bezier_points[3].co
+    polyline.bezier_points[3].handle_left[0] = handle_radius_l * math.cos(
+        -dtheta + handle_theta + start_angle)
+    polyline.bezier_points[3].handle_left[1] = handle_radius_l * math.sin(
+        -dtheta + handle_theta + start_angle)
 
-    polyline.bezier_points[4].co[0] = inner_radius * math.cos(0)
-    polyline.bezier_points[4].co[1] = inner_radius * math.sin(0)
-    polyline.bezier_points[4].handle_left[0] = handle_radius_s * math.cos(
-        -handle_theta)
-    polyline.bezier_points[4].handle_left[1] = handle_radius_s * math.sin(
-        -handle_theta)
-    polyline.bezier_points[4].handle_right[0] = handle_radius_s * math.cos(
-        handle_theta)
-    polyline.bezier_points[4].handle_right[1] = handle_radius_s * math.sin(
-        handle_theta)
+    polyline.bezier_points[4].co = polyline.bezier_points[3].co
+    polyline.bezier_points[4].handle_right = polyline.bezier_points[3].co
+    polyline.bezier_points[4].handle_left = polyline.bezier_points[3].co
 
-    polyline.bezier_points[5].co[0] = inner_radius * math.cos(dtheta)
-    polyline.bezier_points[5].co[1] = inner_radius * math.sin(dtheta)
-    polyline.bezier_points[5].handle_right = polyline.bezier_points[5].co
-    polyline.bezier_points[5].handle_left[0] = handle_radius_s * math.cos(
-        dtheta - handle_theta)
-    polyline.bezier_points[5].handle_left[1] = handle_radius_s * math.sin(
-        dtheta - handle_theta)
 
-    if mirror:
-        for p in polyline.bezier_points:
-            p.co[0] *= -1
-            p.handle_right[0] *= -1
-            p.handle_left[0] *= -1
+    polyline.bezier_points[5].co[0] = inner_radius * math.cos(-dtheta +
+                                                              start_angle)
+    polyline.bezier_points[5].co[1] = inner_radius * math.sin(-dtheta +
+                                                              start_angle)
+    polyline.bezier_points[5].handle_left = polyline.bezier_points[4].co
+    polyline.bezier_points[5].handle_right[0] = handle_radius_s * math.cos(
+        -dtheta + handle_theta + start_angle)
+    polyline.bezier_points[5].handle_right[1] = handle_radius_s * math.sin(
+        -dtheta + handle_theta + start_angle)
+
+    polyline.bezier_points[6].co[0] = inner_radius * math.cos(start_angle)
+    polyline.bezier_points[6].co[1] = inner_radius * math.sin(start_angle)
+    polyline.bezier_points[6].handle_left[0] = handle_radius_s * math.cos(
+        -handle_theta + start_angle)
+    polyline.bezier_points[6].handle_left[1] = handle_radius_s * math.sin(
+        -handle_theta + start_angle)
+    polyline.bezier_points[6].handle_right[0] = handle_radius_s * math.cos(
+        handle_theta + start_angle)
+    polyline.bezier_points[6].handle_right[1] = handle_radius_s * math.sin(
+        handle_theta + start_angle)
+
+    polyline.bezier_points[7].co[0] = inner_radius * math.cos(dtheta +
+                                                              start_angle)
+    polyline.bezier_points[7].co[1] = inner_radius * math.sin(dtheta +
+                                                              start_angle)
+    polyline.bezier_points[7].handle_right = polyline.bezier_points[7].co
+    polyline.bezier_points[7].handle_left[0] = handle_radius_s * math.cos(
+        dtheta - handle_theta + start_angle)
+    polyline.bezier_points[7].handle_left[1] = handle_radius_s * math.sin(
+        dtheta - handle_theta + start_angle)
+
+    return polyline
+
+## 
+# @brief 
+# 
+# @param outer_radius
+# @param inner_radius
+# @param amount
+# @param start_angle
+# @param context
+# 
+# @return 
+def make_tube_section_slice(outer_radius, inner_radius, amount, start_angle,
+                            context):
+    curveData = bpy.data.curves.new('StripedTubeSection', type='CURVE')
+    curveData.dimensions = '3D'
+    curveData.resolution_u = 5
+    curveData.render_resolution_u = 12
+    curveData.use_fill_caps = True
+    curveData.use_radius = True
+
+    polyline = make_tube_section_slice_data(outer_radius, inner_radius, amount,
+                                            start_angle, curveData)
 
     ret = bpy.data.objects.new('StripedTubeSection', curveData)
     context.scene.objects.link(ret)
@@ -149,56 +155,62 @@ def make_tube_section_slice(outer_radius, inner_radius, amount, mirror,
 
     return ret
 
-
-## Creates two curve objects representing the cross section of a striped
-# insulator.
-# @param outer_radius Radius of outer circle
-# @param inner_radius Radius of inner circle
-# @param amount Percentage of circumference to be striped
-# @param double_sided Split stripe into two slices
-# @param context Context in which to create the curve
-# @return The two parts of the tube section
+## 
+# @brief 
+# 
+# @param outer_radius
+# @param inner_radius
+# @param amount
+# @param double_sided
+# @param context
+# 
+# @return 
 def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided,
                               context):
     if amount > 0.51 or amount < 0.1:
-        raise InputError("Please select an amount between 0.1 and 0.51")
+        raise rco.InputError("Please select an amount between 0.1 and 0.51")
     elif outer_radius <= 0.0 or inner_radius <= 0.0:
-        raise InputError("Invalid radius")
+        raise rco.InputError("Invalid radius")
+    elif inner_radius >= outer_radius:
+        raise rco.InputError("Inner radius must be smaller than outer radius.")
+
+    baseCurveData = bpy.data.curves.new('TubeSectionBase', type='CURVE')
+    baseCurveData.dimensions = '3D'
+    baseCurveData.resolution_u = 5
+    baseCurveData.render_resolution_u = 12
+    baseCurveData.use_fill_caps = True
+    baseCurveData.use_radius = True
+
+    stripeCurveData = bpy.data.curves.new('TubeSectionStripe', type='CURVE')
+    stripeCurveData.dimensions = '3D'
+    stripeCurveData.resolution_u = 5
+    stripeCurveData.render_resolution_u = 12
+    stripeCurveData.use_fill_caps = True
+    stripeCurveData.use_radius = True
 
     if double_sided:
-        first = make_tube_section_slice(outer_radius, inner_radius,
-                                        (1.0 - amount) / 2.0, False, context)
-        second = make_tube_section_slice(outer_radius, inner_radius,
-                                         (1.0 - amount) / 2.0, True, context)
-        base = rco.join_objects([first, second], context)
+        make_tube_section_slice_data(outer_radius, inner_radius, amount / 2.0,
+                                     0, stripeCurveData)
+        make_tube_section_slice_data(outer_radius, inner_radius, amount / 2.0,
+                                     math.pi, stripeCurveData)
 
-        first = make_tube_section_slice(outer_radius, inner_radius,
-                                        amount / 2.0, False, context)
-        second = make_tube_section_slice(outer_radius, inner_radius,
-                                         amount / 2.0, True, context)
-        stripe = rco.join_objects([first, second], context)
-        theta = math.pi
+        make_tube_section_slice_data(outer_radius, inner_radius, (1.0 - amount) / 2.0,
+                                     math.pi / 2.0, baseCurveData)
+        make_tube_section_slice_data(outer_radius, inner_radius, (1.0 - amount) / 2.0,
+                                     math.pi * 1.5, baseCurveData)
     else:
-        base = make_tube_section_slice(outer_radius, inner_radius,
-                                       1.0 - amount, False, context)
-        stripe = make_tube_section_slice(outer_radius, inner_radius, amount,
-                                         False, context)
-        theta = math.pi + (math.pi / 2)
+        make_tube_section_slice_data(outer_radius, inner_radius, amount,
+                                     0, stripeCurveData)
+        make_tube_section_slice_data(outer_radius, inner_radius, 1.0 - amount,
+                                     math.pi, baseCurveData)
 
-    theta_offs = 0
-    for spline in stripe.data.splines:
-        for p in spline.bezier_points:
-            rco.rotate_point_xy(p.co, theta + theta_offs)
-            rco.rotate_point_xy(p.handle_left, theta + theta_offs)
-            rco.rotate_point_xy(p.handle_right, theta + theta_offs)
-
-        theta_offs += math.pi
-
-    base.name = "TubeSectionBase"
-    stripe.name = "TubeSectionStripe"
+    base = bpy.data.objects.new('TubeSectionBase', baseCurveData)
+    context.scene.objects.link(base)
+    context.scene.objects.active = base
+    stripe = bpy.data.objects.new('TubeSectionStripe', stripeCurveData)
+    context.scene.objects.link(stripe)
 
     return base, stripe
-
 
 ## Creates a tube representing the insulator
 # @param inner_radius The inner radius of plastic tube
@@ -208,6 +220,8 @@ def make_striped_tube_section(outer_radius, inner_radius, amount, double_sided,
 # @return The new object
 def make_insulator(inner_radius, outer_radius, length, peel_length, material,
                    color_name, context):
+    print(inner_radius)
+    print(outer_radius)
     # Create guide curve
     line = rco.make_line((0, 0, length), (0, 0, 0), 1, context)
     line.data.use_fill_caps = True
@@ -219,7 +233,7 @@ def make_insulator(inner_radius, outer_radius, length, peel_length, material,
     # Solid colour insulator
     if color_name in cm.INSULATOR_COLORS.keys():
         base_color = cm.INSULATOR_COLORS[color_name]
-        profile = make_tube_section(outer_radius, inner_radius, context)
+        profile = rco.make_tube_section(outer_radius, inner_radius, context)
         line.data.bevel_object = profile
         line.active_material = cm.INSULATOR_MATERIALS[material](base_color,
                                                                 outer_radius)
@@ -892,8 +906,8 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
 
         # Solid coloured insulator
         if color_name in cm.INSULATOR_COLORS.keys():
-            base_profile = make_tube_section(outer_radius, inner_radius,
-                                             context)
+            base_profile = rco.make_tube_section(outer_radius, inner_radius,
+                                                 context)
             base_profile.parent = guide_curve
             base_profile.hide = True
             guide_curve.data.bevel_object = base_profile
@@ -909,11 +923,12 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
             double_sided = stripe_data[3]
 
             base_profile, stripe_profile = make_striped_tube_section(
-                inner_radius, outer_radius, amount, double_sided, context)
+                outer_radius, inner_radius, amount, double_sided, context)
 
             # Make a copy of the guide curve for our stripe
             stripe_curve = bpy.data.objects.new('StripeCurve',
                                                 guide_curve.data.copy())
+            stripe_curve.rotation_euler = (0, 0, theta)
             stripe_curve.parent = ret
             stripe_curve.name = 'InsulatorStripe'
             context.scene.objects.link(stripe_curve)
