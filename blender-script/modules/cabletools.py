@@ -9,7 +9,9 @@ import rco
 
 CONDUCTOR_MATERIALS = [('cu', 'CU', 'Standard copper'),
                        ('cu-t', 'CU-Tinned', 'Tinned copper'),
-                       ('al', 'AL', 'Aluminium')]
+                       ('al', 'AL', 'Aluminium'),   
+                       ('fe_zn', 'FE/ZN', 'Aluminium'),
+                       ('fe', 'FE', 'Iron')]
 INSULATOR_MATERIALS = [('pvc', 'PVC', 'PVC'), ('pe', 'PE', 'Polyethelene'),
                        ('pex', 'PEX', 'Cross linked polyethylene')]
 LAP_MATERIALS = [('plastic', 'Plastic', 'Transparent plastic'),
