@@ -63,6 +63,11 @@ def insulator_material(color, material_name, material_node_group_name,
     material.node_tree.links.new(material_output.inputs[0],
                                  nodegroup.outputs[0])
 
+    #use displacement input if Displacement in NodeGroup output
+    if 'Displacement' in nodegroup.outputs:
+        material.node_tree.links.new(material_output.inputs['Displacement'],
+                                 nodegroup.outputs['Displacement'])    
+
     return material
 
 
@@ -171,6 +176,11 @@ def conductor_material(material_name, material_node_group_name):
     material.node_tree.links.new(material_output.inputs[0],
                                  nodegroup.outputs[0])
 
+    #use displacement input if Displacement in NodeGroup output
+    if 'Displacement' in nodegroup.outputs:
+        material.node_tree.links.new(material_output.inputs['Displacement'],
+                             nodegroup.outputs['Displacement'])
+
     #set viewport color
     #material.diffuse_color = base_color
 
@@ -198,6 +208,11 @@ def aluminum_conductor_material():
 def iron_conductor_material():
     material = conductor_material('conductor_iron', 'metal_iron')
     material.diffuse_color = CONDUCTOR_COLORS['iron']
+    return material
+
+def iron_zinc_conductor_material():
+    material = conductor_material('conductor_iron_zinc', 'metal_iron_zinc')
+    material.diffuse_color = CONDUCTOR_COLORS['iron_zinc']
     return material
 
 
@@ -228,6 +243,11 @@ def lap_material(material_name, material_node_group_name, object_radius):
     # link nodes to material output
     material.node_tree.links.new(material_output.inputs[0],
                                  nodegroup.outputs[0])
+
+    #use displacement input if Displacement in NodeGroup output
+    if 'Displacement' in nodegroup.outputs:
+        material.node_tree.links.new(material_output.inputs['Displacement'],
+                                 nodegroup.outputs['Displacement'])    
 
     return material
 
@@ -263,7 +283,8 @@ INSULATOR_MATERIALS = {'pvc': pvc_insulator_material,
 CONDUCTOR_MATERIALS = {'cu': copper_conductor_material,
                        'cu-t': tinned_copper_conductor_material,
                        'al': aluminum_conductor_material,
-                       'fe': iron_conductor_material}
+                       'fe': iron_conductor_material,
+                       'fe_zn': iron_zinc_conductor_material}
 
 LAP_MATERIALS = {'nylon': nylon_lap_material,
                  'chrome': chrome_lap_material,
@@ -286,7 +307,8 @@ INSULATOR_COLORS = {'red': (0.549, 0.002, 0.009),
 CONDUCTOR_COLORS = {'copper': (0.603, 0.093, 0.0),
                     'tin': (0.603, 0.603, 0.603),
                     'aluminum': (0.666654, 0.590356, 0.748414),
-                    'iron': (0.666654, 0.590356, 0.748414)}
+                    'iron': (0.666654, 0.590356, 0.748414),
+                    'iron_zinc': (0.200000, 0.200000, 0.200000)}
 
 LAP_COLORS = {'nylon': (0.6, 0.6, 0.6),
               'chrome': (0.603, 0.603, 0.603),
