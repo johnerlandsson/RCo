@@ -15,7 +15,7 @@ bpy.types.Scene.CT_make_part_cond_diameter = bpy.props.FloatProperty(
         unit = 'LENGTH',
         default = 0.0075,
         min = 0.001,
-        max = 0.02)
+        max = 0.2)
 
 bpy.types.Scene.CT_make_part_cond_strand_dia = bpy.props.FloatProperty(
         name = "Strand Diameter",

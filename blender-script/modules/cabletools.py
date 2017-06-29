@@ -24,8 +24,6 @@ for k in cm.INSULATOR_COLORS:
 for k in cm.STRIPE_TYPES:
     INSULATOR_COLORS.append((k, k, k))
 
-
-
 ## 
 # @brief 
 # 
@@ -660,7 +658,7 @@ def make_mesh_bunched_strand(length,
                              strand_radius,
                              mesh_data,
                              start_angle=0.0):
-    ppr = 8  # Points per revolution
+    ppr = 10  # Points per revolution
     cpr = 10  # Circles per revolution
     n_circles = math.floor(cpr * length * pitch)
     dtheta_cp = (2.0 * math.pi) / ppr  # Angle between circle points
@@ -874,7 +872,8 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
     return ret
 
 
-## Creates a circular array of insulators
+## 
+# @brief Creates a circular array of insulators
 #
 # @param length Axial length of the array
 # @param pitch Number of revolutions per length unit
@@ -886,6 +885,7 @@ def make_conductor_array(length, pitch, radius, conductor_radius, strand_pitch,
 # @param clockwise Rotation direction of array helix
 # @param peel_length How much of the insulator end to be removed
 # @param context Context in which to create the array
+#
 # @return The new object
 def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
                          material, colors, clockwize, peel_length, context):
@@ -897,6 +897,8 @@ def make_insulator_array(length, pitch, radius, outer_radius, inner_radius,
 
     dtheta = (2.0 * math.pi) / len(color_names)
     theta = 0.0
+
+    print(colors)
 
     for color_name in color_names:
         guide_curve = rco.make_bezier_helix(length, pitch, radius, clockwize,

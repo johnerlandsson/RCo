@@ -14,7 +14,7 @@ bpy.types.Scene.CT_make_part_array_cond_diameter = bpy.props.FloatProperty(
         subtype = 'DISTANCE',
         unit = 'LENGTH',
         default = 0.0075,
-        min = 0.001,
+        min = 0.0005,
         max = 0.02)
 
 bpy.types.Scene.CT_make_part_array_cond_strand_dia = bpy.props.FloatProperty(
@@ -45,7 +45,7 @@ bpy.types.Scene.CT_make_part_array_ins_outer_dia = bpy.props.FloatProperty(
         subtype = 'DISTANCE',
         unit = 'LENGTH',
         default = 0.0099,
-        min = 0.001,
+        min = 0.0005,
         max = 0.03)
 
 bpy.types.Scene.CT_make_part_array_length = bpy.props.FloatProperty(
@@ -85,7 +85,7 @@ bpy.types.Scene.CT_make_part_array_radius = bpy.props.FloatProperty(
         subtype = 'DISTANCE',
         unit = 'LENGTH',
         default = 0.01,
-        min = 0.001,
+        min = 0.0005,
         max = 0.1)
 
 bpy.types.Scene.CT_make_part_array_pitch = bpy.props.FloatProperty(
@@ -134,8 +134,8 @@ class MakePartArray(bpy.types.Operator):
                            ins_inner_radius = inner_radius,
                            ins_material = insulator_material,
                            ins_colors = insulator_colors,
-                           ins_peel_length = peel_length,
                            cond_radius = conductor_radius,
+                           ins_peel_length = peel_length,
                            cond_strand_pitch = conductor_pitch,
                            cond_material = conductor_material,
                            cond_strand_radius = conductor_strand_radius,

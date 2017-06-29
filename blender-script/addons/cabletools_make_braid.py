@@ -14,7 +14,7 @@ bpy.types.Scene.CT_make_braid_diameter = bpy.props.FloatProperty(
     default=0.05,
     subtype='DISTANCE',
     unit='LENGTH',
-    min=0.01,
+    min=0.005,
     max=0.3)
 
 bpy.types.Scene.CT_make_braid_strand_dia = bpy.props.FloatProperty(
@@ -41,7 +41,7 @@ bpy.types.Scene.CT_make_braid_pitch = bpy.props.FloatProperty(
     default=0.12,
     subtype='DISTANCE',
     unit='LENGTH',
-    min=0.05,
+    min=0.005,
     max=0.3)
 
 bpy.types.Scene.CT_make_braid_bundle_size = bpy.props.IntProperty(
