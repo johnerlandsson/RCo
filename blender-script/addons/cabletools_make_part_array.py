@@ -54,7 +54,7 @@ bpy.types.Scene.CT_make_part_array_length = bpy.props.FloatProperty(
         subtype = 'DISTANCE',
         unit = 'LENGTH',
         default = 0.25,
-        min = 0.2,
+        min = 0.1,
         max = 1.0)
 
 bpy.types.Scene.CT_make_part_array_ins_material = bpy.props.EnumProperty(

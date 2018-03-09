@@ -13,7 +13,7 @@ bpy.types.Scene.CT_make_lap_diameter = bpy.props.FloatProperty(
         subtype = 'DISTANCE',
         unit = 'LENGTH',
         default = 0.00162,
-        min = 0.005,
+        min = 0.0005,
         max = 0.3)
 
 bpy.types.Scene.CT_make_lap_length = bpy.props.FloatProperty(

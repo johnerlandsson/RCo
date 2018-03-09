@@ -32,7 +32,7 @@ bpy.types.Scene.CT_make_braid_length = bpy.props.FloatProperty(
     default=0.25,
     subtype='DISTANCE',
     unit='LENGTH',
-    min=0.2,
+    min=0.12,
     max=10.0)
 
 bpy.types.Scene.CT_make_braid_pitch = bpy.props.FloatProperty(
@@ -42,7 +42,7 @@ bpy.types.Scene.CT_make_braid_pitch = bpy.props.FloatProperty(
     subtype='DISTANCE',
     unit='LENGTH',
     min=0.005,
-    max=0.3)
+    max=0.5)
 
 bpy.types.Scene.CT_make_braid_bundle_size = bpy.props.IntProperty(
     name="Bundle size",
@@ -56,7 +56,7 @@ bpy.types.Scene.CT_make_braid_n_bundle_pairs = bpy.props.IntProperty(
     description="Number of bundle pairs in braid",
     default=12,
     min=1,
-    max=20)
+    max=30)
 
 bpy.types.Scene.CT_make_braid_material = bpy.props.EnumProperty(
     items=ct.CONDUCTOR_MATERIALS, name="Material")
