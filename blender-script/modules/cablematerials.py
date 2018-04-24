@@ -96,6 +96,18 @@ def pe_insulator_material(color, object_radius=0.001):
 
     return material
 
+def ldpe_insulator_material(color, object_radius=0.001):
+    material = insulator_material(
+        color=color,
+        material_name='ldpe_insulator_material',
+        material_node_group_name='plastic_ldpe',
+        object_radius=object_radius)
+
+    #set viewport color
+    material.diffuse_color = color
+
+    return material
+
 
 def pur_insulator_material(color, object_radius=0.001):
     material = insulator_material(
@@ -275,6 +287,7 @@ def plastic_lap_material(object_radius=0.001):
 
 INSULATOR_MATERIALS = {'pvc': pvc_insulator_material,
                        'pe': pe_insulator_material,
+                       'ldpe': ldpe_insulator_material,
                        'pur': pur_insulator_material,
                        'epd': epd_insulator_material,
                        'fill': fill_insulator_material,
@@ -302,7 +315,9 @@ INSULATOR_COLORS = {'red': (0.549, 0.002, 0.009),
                     'grey': (0.173, 0.173, 0.173),
                     'orange': (0.8, 0.136, 0.019),
                     'purple': (0.339, 0.044, 0.549),
-                    'yellow': (0.532, 0.549, 0.004)}
+                    'yellow': (0.532, 0.549, 0.004),
+                    'cyan': (0.012, 0.326, 0.274),
+                    'kraft-green': (0.006, 0.095, 0.022)}
 
 CONDUCTOR_COLORS = {'copper': (0.603, 0.093, 0.0),
                     'tin': (0.603, 0.603, 0.603),
@@ -334,6 +349,8 @@ STRIPE_TYPES = {
     (INSULATOR_COLORS['white'], INSULATOR_COLORS['orange'], 0.5, False),
     'd-pink':
     (INSULATOR_COLORS['white'], INSULATOR_COLORS['pink'], 0.5, False),
+    'd-purple':
+    (INSULATOR_COLORS['white'], INSULATOR_COLORS['purple'], 0.5, False),
     'ye/red_50/50': (INSULATOR_COLORS['yellow'], INSULATOR_COLORS['red'], 0.5,
                      True),
     'red/black_50/50': (INSULATOR_COLORS['red'], INSULATOR_COLORS['black'], 0.5,
@@ -351,6 +368,12 @@ STRIPE_TYPES = {
     'yellow/white_50/50': (INSULATOR_COLORS['yellow'], INSULATOR_COLORS['white'], 0.5,
                      True),
     'red/white_50/50': (INSULATOR_COLORS['red'], INSULATOR_COLORS['white'], 0.5,
+                     True),
+    'pink/white_50/50': (INSULATOR_COLORS['pink'], INSULATOR_COLORS['white'], 0.5,
+                     True),
+    'purple/white_50/50': (INSULATOR_COLORS['purple'], INSULATOR_COLORS['white'], 0.5,
+                     True),
+    'grey/white_50/50': (INSULATOR_COLORS['grey'], INSULATOR_COLORS['white'], 0.5,
                      True),
     'brown/white_50/50': (INSULATOR_COLORS['brown'], INSULATOR_COLORS['white'], 0.5,
                      True),

@@ -12,8 +12,7 @@ CONDUCTOR_MATERIALS = [('cu', 'CU', 'Standard copper'),
                        ('al', 'AL', 'Aluminium'),   
                        ('fe_zn', 'FE/ZN', 'Aluminium'),
                        ('fe', 'FE', 'Iron')]
-INSULATOR_MATERIALS = [('pvc', 'PVC', 'PVC'), ('pe', 'PE', 'Polyethelene'),
-                       ('pex', 'PEX', 'Cross linked polyethylene')]
+INSULATOR_MATERIALS = [('pvc', 'PVC', 'PVC'), ('pe', 'PE', 'Polyethelene'), ('ldpe', 'LDPE', 'LDPE'), ('pex', 'PEX', 'Cross linked polyethylene')]
 LAP_MATERIALS = [('plastic', 'Plastic', 'Transparent plastic'),
                  ('nylon', 'Nylon', 'Nylon felt lap'),
                  ('chrome', 'Chrome', 'Chrome lap')]

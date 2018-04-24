@@ -41,7 +41,7 @@ bpy.types.Scene.CT_make_conductor_pitch = bpy.props.FloatProperty(
         unit = 'LENGTH',
         default = 0.045,
         min = 0.0,
-        max = 0.05)
+        max = 0.5)
 
 bpy.types.Scene.CT_make_conductor_material = bpy.props.EnumProperty(
         items = ct.CONDUCTOR_MATERIALS,
