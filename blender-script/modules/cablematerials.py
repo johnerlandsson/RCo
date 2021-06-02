@@ -379,6 +379,8 @@ STRIPE_TYPES = {
                      True),
     'gr/purp_90/10': (INSULATOR_COLORS['green'], INSULATOR_COLORS['purple'],
                       0.1, False),
+    'ye/gr_70/30': (INSULATOR_COLORS['yellow'], INSULATOR_COLORS['green'],
+                      0.3, True),
     'white/blue_90/10':
     (INSULATOR_COLORS['white'], INSULATOR_COLORS['blue'], 0.1, False),
     'white/orange_90/10':
