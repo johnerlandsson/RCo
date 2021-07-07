@@ -338,7 +338,7 @@ def make_solid_conductor(length, radius, context):
 # @param context Context in wich to create the conductor
 # @return The conductor object
 def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
-                            context):
+                            clockwize, context):
     #Create a list of points corresponding to the strand positions
     points = strand_positions(conductor_radius - strand_radius, strand_radius)
 
@@ -375,7 +375,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
                         length=length,
                         pitch=pitch,
                         radius=r,
-                        clockwize=True,
+                        clockwize=clockwize,
                         context=context)
 
                 # Add bevel object
@@ -418,7 +418,7 @@ def make_stranded_conductor(length, conductor_radius, pitch, strand_radius,
 # @param context Context in which to create the conductor object
 # @return The new object
 def make_conductor(length, conductor_radius, strand_radius, strand_pitch,
-                   material, context):
+                   material, clockwize, context):
     # Solid conductor
     if conductor_radius == strand_radius or rco.about_eq(strand_radius, 0.0):
         conductor = make_solid_conductor(
@@ -430,6 +430,7 @@ def make_conductor(length, conductor_radius, strand_radius, strand_pitch,
             conductor_radius=conductor_radius,
             pitch=strand_pitch,
             strand_radius=strand_radius,
+            clockwize=clockwize,
             context=context)
 
     conductor.active_material = cm.CONDUCTOR_MATERIALS[material]()
@@ -658,7 +659,12 @@ def make_mesh_bunched_strand(length,
                              mesh_data,
                              start_angle=0.0):
     ppr = 10  # Points per revolution
-    cpr = 10  # Circles per revolution
+    cpr = math.floor((pitch / 0.05) * (radius / 0.005)) # Circles per revolution
+    if cpr < 10:
+        cpr = 10
+    elif cpr > 80:
+        cpr = 80
+
     n_circles = math.floor(cpr * length * pitch)
     dtheta_cp = (2.0 * math.pi) / ppr  # Angle between circle points
     theta_x = math.atan((
